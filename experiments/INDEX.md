@@ -20,3 +20,7 @@ One row per experiment. New entries append; superseded runs are marked, not dele
 
 ## Known pre-existing issue (not introduced here)
 - `Tests/analyzer/test_analyze_reports.py::TestExportBenchmark` (7 tests) fail on a clean tree: robust-filter `theta` default drift (test expects `theta=0.0` behavior, code default is 0.05 producing 0 robust datapoints). Orthogonal to this work.
+
+## Cycle-3 additions (2026-06-01)
+- **G-Eval baseline (R9):** single gpt-4o+CoT on 600 summarization responses → rho=0.259 [0.18,0.33] vs BERTScore (CoEval ensemble 0.244; best single 0.354). `Runs/EXP001-.../reports/geval_baseline.json`, `scripts/geval_baseline.py`.
+- **Model-ranking demo:** CoEval frontier ensemble reproduces exact ground-truth ranking (gpt-4o-mini 0.963 > gpt-3.5 0.921 > llama-3b 0.843; GT identical). `Runs/EXP001b-.../reports/model_ranking.json`. Paper Table 2.

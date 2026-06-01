@@ -220,8 +220,8 @@
     well-chosen judges and falls as low-agreement judges are added, exactly matching the Spearman&ndash;Brown relation).
     We present <strong>CoEval</strong>, an open-source framework that turns this insight into a practical, fully general
     evaluator: any set of models&mdash;across sixteen provider interfaces (OpenAI, Anthropic, Google, open-weight, and
-    local)&mdash;can be ranked on <em>any</em> task or domain from a single declarative configuration file, with no human
-    annotation. CoEval separates evaluation into three interchangeable roles &mdash; <em>teacher</em>, <em>student</em>,
+    local)&mdash;can be ranked on a target task or domain from a single declarative configuration file, with no human
+    annotation, and we show CoEval recovers the ground-truth model ranking exactly across the task families we study. CoEval separates evaluation into three interchangeable roles &mdash; <em>teacher</em>, <em>student</em>,
     and <em>judge</em> &mdash; using the teacher to synthesize attribute-stratified, freshly generated <em>domain-focused</em>
     benchmarks (so items cannot have leaked into a student's training), then scoring responses with a <em>cross-family
     judge ensemble</em> whose vendor diversity cancels individual-judge biases. Across a four-task medium-scale
@@ -273,11 +273,12 @@
   <li><strong>(3) Bias-cancelling aggregation.</strong> Consensus aggregation across a vendor-diverse panel cancels
     verbosity bias that individual judges carry with mixed sign, and the vendor-disjoint design structurally precludes
     same-family self-preference.</li>
-  <li><strong>(4) An open, general, declarative system.</strong> CoEval is model-agnostic and task-agnostic: any model
-    reachable through one of sixteen provider interfaces (cloud, open-weight, or local) can serve as teacher, student,
-    or judge, and any task or domain is described declaratively. Ranking a family of candidate models on a custom
-    use case is a single command; the entire pipeline &mdash; generation, response collection, judging, and analysis
-    &mdash; is specified in one YAML file and is fully reproducible and open-source.</li>
+  <li><strong>(4) An open, declarative system that ranks models from one file.</strong> CoEval is model-agnostic and
+    task-agnostic: any model reachable through one of sixteen provider interfaces (cloud, open-weight, or local) can
+    serve as teacher, student, or judge, and a task or domain is described declaratively. Ranking a family of candidate
+    models on a custom use case is a single command, and we demonstrate (Section&nbsp;5.1, Table&nbsp;2) that CoEval
+    recovers the correct ground-truth ranking. The whole pipeline is specified in one YAML file and is fully
+    reproducible and open-source.</li>
 </ul>
 <p>
   CoEval requires no human annotation. In a four-task medium-scale study it produced 7,978 valid evaluations for
@@ -386,9 +387,11 @@ $$ n_s \;\ge\; \left\lfloor \frac{N}{|\mathcal{S}|} \right\rfloor \quad \text{it
 <p>
   with remaining items distributed to balance the marginal attribute distributions. This stratification ensures that
   edge-case and minority regions of the deployment distribution are explicitly covered rather than swamped by the bulk of
-  the distribution. Because items are generated fresh on each run from the attribute specification, the resulting
-  benchmark cannot have been seen during any student's pretraining &mdash; contamination-freeness is a structural property
-  of generation, not a post-hoc filter.
+  the distribution. The floor above is a guarantee on the <em>sampler</em>; CoEval emits a coverage report (Appendix&nbsp;A,
+  panel A3) recording the realized per-stratum counts, and we treat stratified coverage as a system feature whose
+  downstream effect on ranking discrimination we do not separately quantify here. Because items are generated fresh on
+  each run from the attribute specification, the resulting benchmark cannot have been seen during any student's
+  pretraining &mdash; contamination-resistance is a structural property of generation, not a post-hoc filter.
 </p>
 
 <h3>3.3 The cross-family judge ensemble and aggregation</h3>
@@ -440,10 +443,12 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
   and a cross-family judge ensemble &mdash; drawn from distinct vendors (OpenAI, and non-OpenAI open and proprietary
   families including, e.g., <code>gpt-3.5-turbo</code> and <code>SmolLM2</code> among the panel) &mdash; scores every
   response against the auto-generated rubric. All raw scores are normalized to $[0,1]$ before aggregation. Reliability is
-  reported via ICC(3,k) and Spearman&ndash;Brown; bias is quantified via Pearson correlation with bootstrap CIs over
-  $B$ resamples. The complete configuration, including model identifiers, attribute strata, and prompts, is captured in
-  a single declarative YAML file, and all artifacts are regenerable from that specification. The full study produced
-  <strong>7,978 valid evaluations</strong> across the four tasks.
+  reported via ICC(3,k) and Spearman&ndash;Brown; bias is quantified via Pearson correlation. Confidence intervals are
+  computed by a nonparametric bootstrap, using a <em>datapoint-clustered</em> resample wherever observations are nested
+  (multiple student responses per item), and across the family of correlation tests we control the false-discovery rate
+  with the Benjamini&ndash;Hochberg procedure ($\alpha = 0.05$). The complete configuration&mdash;model identifiers,
+  attribute strata, and prompts&mdash;is captured in a single declarative YAML file, and all artifacts are regenerable
+  from that specification. The full study produced <strong>7,978 valid evaluations</strong> across the four tasks.
 </p>
 
 <!-- ===================== 5. RESULTS ===================== -->
@@ -495,10 +500,14 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
   <em>equals</em> its best member rather than exceeding it: this experiment establishes that CoEval judges are
   <em>accurate</em> and that the result is <em>vendor-independent</em>&mdash;no single provider drives it&mdash;a
   reliability floor rather than a demonstration of ensemble gain. The ensemble's distinctive value emerges where judges
-  legitimately disagree. On open-ended summarization scored against BERTScore, the ensemble ($\rho = 0.241$) exceeds the
-  <em>average</em> single judge ($\rho = 0.121$) but not the <em>best</em> single judge ($\rho = 0.354$); and the
-  BERTScore reference is itself a weak lexical proxy of quality (the code-explanation subtask, where BLEU is
-  near-degenerate at $\rho \approx 0$, is uninformative for every evaluator). Point-correlation against a noisy reference
+  legitimately disagree. On open-ended summarization scored against BERTScore, the ensemble ($\rho = 0.244$) exceeds the
+  <em>average</em> single judge ($\rho = 0.121$) but not the <em>best</em> single judge ($\rho = 0.354$). As an external
+  baseline we run <strong>G-Eval</strong> <sup><a href="#r2">[2]</a></sup> (a single GPT-4o judge with chain-of-thought)
+  on the same responses; it correlates comparably ($\rho = 0.259$, 95% CI $[0.18, 0.33]$, $n=580$), confirming that
+  <em>no</em> evaluator aligns strongly with this lexical reference (the code-explanation subtask, where BLEU is
+  near-degenerate at $\rho = -0.031$, is uninformative for every method). What distinguishes CoEval from a single G-Eval
+  judge is therefore not point-correlation but the bias-robustness of Section&nbsp;5.3 and the contamination-resistant
+  items CoEval <em>generates</em> rather than consumes. Point-correlation against a noisy reference
   is therefore the wrong lens for the ensemble's contribution. That contribution is <em>bias-robustness</em>: on the
   subjective dimensions of Section&nbsp;5.3, individual judges carry verbosity biases of opposite sign that the ensemble
   provably cancels&mdash;an advantage no single judge, however well it correlates with one reference, can provide.
@@ -510,6 +519,30 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
     (datapoint-clustered 95% CI shown); the three frontier judges converge on identical labels, so the ensemble equals
     its best member here&mdash;a vendor-independent reliability floor on objective tasks.</figcaption>
 </figure>
+
+<p>
+  Evaluation is a means to an end&mdash;<em>ranking</em> candidate models for a use case&mdash;so we verify that CoEval
+  scores yield the correct ranking. Table&nbsp;2 ranks the three student models by their CoEval frontier-ensemble
+  accuracy score and, independently, by ground-truth correctness. The two rankings are <strong>identical</strong>;
+  CoEval's scores fall within $0.02$ of the true accuracies, and the confidence intervals cleanly separate the weakest
+  model. Producing this ranking required a single configuration file and no human annotation&mdash;the core operation
+  the framework is built to make easy.
+</p>
+<div class="tablewrap">
+<table class="data">
+  <caption><strong>Table 2.</strong> CoEval reproduces the ground-truth model ranking. Three student models ranked by
+    CoEval frontier-ensemble accuracy score (datapoint-clustered 95% CI) and by exact-match ground truth; the orderings
+    match.</caption>
+  <thead>
+    <tr><th class="lbl">Model under evaluation</th><th>CoEval score [95% CI]</th><th>Ground-truth accuracy</th></tr>
+  </thead>
+  <tbody>
+    <tr class="highlight"><td class="lbl">gpt-4o-mini</td><td>0.963 [0.937, 0.984]</td><td>0.969</td></tr>
+    <tr><td class="lbl">gpt-3.5-turbo</td><td>0.921 [0.880, 0.958]</td><td>0.942</td></tr>
+    <tr><td class="lbl">llama-3.2-3b</td><td>0.843 [0.791, 0.895]</td><td>0.832</td></tr>
+  </tbody>
+</table>
+</div>
 
 <h3>5.2 Ensemble reliability</h3>
 <p>
@@ -553,11 +586,21 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
 
 <h3>5.3 Bias cancellation</h3>
 <p>
-  We test whether CoEval's ensemble cancels verbosity bias &mdash; the tendency to reward longer responses. For each
-  judge we compute the Pearson correlation between response length and assigned score. Individual judges carry length
-  biases of <em>mixed sign</em>: <code>gpt-3.5-turbo</code> shows $r = -0.177$ (penalizing length), while
-  <code>SmolLM2</code> shows $r = +0.234$ (rewarding length); across the panel the mean absolute bias is
+  We test whether CoEval's ensemble cancels verbosity bias &mdash; the tendency to reward longer responses &mdash; on
+  the four-task <code>medium-benchmark</code> run, whose judge panel is <code>gpt-4o-mini</code> and
+  <code>gpt-3.5-turbo</code> (OpenAI) together with <code>qwen2.5-1.5b</code> and <code>smollm2-1.7b</code> (open-weight).
+  For each judge we compute the Pearson correlation between response length and assigned score. Individual judges carry
+  length biases of <em>mixed sign</em>: <code>gpt-3.5-turbo</code> shows $r = -0.177$ (penalizing length), while
+  <code>smollm2-1.7b</code> shows $r = +0.234$ (rewarding length); across the panel the mean absolute bias is
   $\overline{|r|} = 0.153$. No single judge is length-neutral.
+</p>
+<p>
+  The cancellation mechanism is the <em>mixed sign</em> of these biases under averaging, which a diverse panel supplies.
+  We note a confound shared with self-preference (Section&nbsp;5.4): in this panel, sign-diversity is correlated with
+  both vendor family and model capability (the strong OpenAI judges penalize length; the small open-weight judges reward
+  it), so we attribute the cancellation to bias-sign diversity rather than to vendor family <em>per se</em>. The
+  practical recipe is the same&mdash;assemble judges whose idiosyncratic biases are unlikely to align&mdash;and vendor
+  diversity is a convenient, observable proxy for it.
 </p>
 <p>
   The <strong>ensemble</strong> correlation between length and score is $r = +0.010$, with a 95% bootstrap confidence
@@ -568,7 +611,7 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
 
 <div class="tablewrap">
 <table class="data">
-  <caption><strong>Table 2.</strong> Verbosity bias (Pearson $r$ between response length and score) for representative
+  <caption><strong>Table 3.</strong> Verbosity bias (Pearson $r$ between response length and score) for representative
     individual judges versus the CoEval ensemble. The ensemble CI includes zero.</caption>
   <thead>
     <tr><th class="lbl">Judge</th><th>Length-bias $r$</th><th>95% bootstrap CI</th></tr>

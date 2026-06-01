@@ -1,0 +1,42 @@
+{
+  "task": "exact-match QA (SciQ+ARC)",
+  "panel": [
+    "claude-sonnet-4",
+    "gemini-flash",
+    "gpt-4o"
+  ],
+  "ranking": [
+    {
+      "student": "gpt-4o-mini",
+      "coeval_score": 0.963,
+      "lo": 0.937,
+      "hi": 0.984,
+      "ground_truth_acc": 0.969
+    },
+    {
+      "student": "gpt-3.5-turbo",
+      "coeval_score": 0.921,
+      "lo": 0.88,
+      "hi": 0.958,
+      "ground_truth_acc": 0.942
+    },
+    {
+      "student": "llama-3.2-3b",
+      "coeval_score": 0.843,
+      "lo": 0.791,
+      "hi": 0.895,
+      "ground_truth_acc": 0.832
+    }
+  ],
+  "coeval_ranking": [
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "llama-3.2-3b"
+  ],
+  "ground_truth_ranking": [
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "llama-3.2-3b"
+  ],
+  "rankings_identical": true
+}
