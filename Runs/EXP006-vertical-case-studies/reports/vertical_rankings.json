@@ -1,0 +1,90 @@
+{
+  "clinical_reasoning": {
+    "coeval_ranking": [
+      "gpt-3.5-turbo",
+      "gpt-4o-mini",
+      "llama-3.2-3b"
+    ],
+    "scores": {
+      "gpt-3.5-turbo": 0.873,
+      "gpt-4o-mini": 0.864,
+      "llama-3.2-3b": 0.814
+    },
+    "cis": {
+      "gpt-3.5-turbo": [
+        0.849,
+        0.895
+      ],
+      "gpt-4o-mini": [
+        0.84,
+        0.885
+      ],
+      "llama-3.2-3b": [
+        0.784,
+        0.844
+      ]
+    },
+    "judges_unanimous": false,
+    "per_judge_ranking": {
+      "claude-haiku": [
+        "gpt-3.5-turbo",
+        "gpt-4o-mini",
+        "llama-3.2-3b"
+      ],
+      "gemini-flash": [
+        "gpt-3.5-turbo",
+        "gpt-4o-mini",
+        "llama-3.2-3b"
+      ],
+      "gpt-4o-mini": [
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "llama-3.2-3b"
+      ]
+    }
+  },
+  "legal_analysis": {
+    "coeval_ranking": [
+      "gpt-4o-mini",
+      "gpt-3.5-turbo",
+      "llama-3.2-3b"
+    ],
+    "scores": {
+      "gpt-4o-mini": 0.982,
+      "gpt-3.5-turbo": 0.74,
+      "llama-3.2-3b": 0.709
+    },
+    "cis": {
+      "gpt-4o-mini": [
+        0.973,
+        0.991
+      ],
+      "gpt-3.5-turbo": [
+        0.709,
+        0.77
+      ],
+      "llama-3.2-3b": [
+        0.677,
+        0.744
+      ]
+    },
+    "judges_unanimous": false,
+    "per_judge_ranking": {
+      "claude-haiku": [
+        "gpt-4o-mini",
+        "llama-3.2-3b",
+        "gpt-3.5-turbo"
+      ],
+      "gemini-flash": [
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "llama-3.2-3b"
+      ],
+      "gpt-4o-mini": [
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "llama-3.2-3b"
+      ]
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "student": "gpt-4o-mini",
+  "in_family_judge": "gpt-4o-mini",
+  "in_family_score": 0.905,
+  "out_family_judges": [
+    "claude-haiku",
+    "gemini-flash"
+  ],
+  "out_family_score": 0.932,
+  "self_preference_inflation": -0.027,
+  "task": "clinical+legal verticals"
+}

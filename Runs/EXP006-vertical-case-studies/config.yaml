@@ -1,0 +1,187 @@
+models:
+- name: gpt-4o-mini
+  interface: openrouter
+  parameters:
+    model: openai/gpt-4o-mini
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - teacher
+  - student
+  - judge
+  role_parameters:
+    teacher:
+      temperature: 0.8
+      max_tokens: 640
+    student:
+      temperature: 0.7
+      max_tokens: 256
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+- name: gpt-3.5-turbo
+  interface: openrouter
+  parameters:
+    model: openai/gpt-3.5-turbo
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - student
+  role_parameters:
+    student:
+      temperature: 0.7
+      max_tokens: 256
+- name: llama-3.2-3b
+  interface: openrouter
+  parameters:
+    model: meta-llama/llama-3.2-3b-instruct
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - student
+  role_parameters:
+    student:
+      temperature: 0.7
+      max_tokens: 256
+- name: claude-haiku
+  interface: openrouter
+  parameters:
+    model: anthropic/claude-3.5-haiku
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - judge
+  role_parameters:
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+- name: gemini-flash
+  interface: openrouter
+  parameters:
+    model: google/gemini-2.5-flash
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - judge
+  role_parameters:
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+tasks:
+- name: clinical_reasoning
+  description: clinical reasoning question that a clinician would face, requiring medical knowledge and safe, accurate reasoning.
+  output_description: A concise, clinically accurate answer (2-5 sentences) with correct reasoning and no unsafe advice.
+  target_attributes:
+    specialty:
+    - cardiology
+    - infectious_disease
+    - pediatrics
+    - oncology
+    - emergency
+    difficulty:
+    - routine
+    - intermediate
+    - hard
+  nuanced_attributes: {}
+  sampling:
+    target:
+    - 1
+    nuance:
+    - 0
+    total: 50
+  rubric:
+    clinical_accuracy: The answer is medically correct and consistent with standard guidelines.
+    safety: The answer avoids unsafe, harmful, or contraindicated recommendations.
+    completeness: The answer addresses the key elements the question requires.
+    clarity: The answer is clearly written and appropriate for a clinical audience.
+  evaluation_mode: single
+  prompt_library:
+    sample: 'Generate a realistic, challenging benchmark data point for: {task_description}
+
+      Output format for the model under test: {output_description}
+
+      Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+      Return ONLY a JSON object with keys "prompt" (the question/scenario posed to the model) and "response" (an expert, correct
+      reference answer). Make the prompt specific and domain-authentic; do not copy any existing published item.
+
+      Example: {{"prompt": "...", "response": "..."}}'
+    test: 'You are answering a {task_description}
+
+      Output: {output_description}
+
+
+      {input}
+
+
+      Respond with only the answer.'
+- name: legal_analysis
+  description: legal analysis question requiring identification of the relevant rule and correct application to the facts.
+  output_description: A concise legal analysis (3-6 sentences) identifying the issue, the governing rule, and the correct
+    conclusion.
+  target_attributes:
+    area_of_law:
+    - contracts
+    - torts
+    - criminal
+    - constitutional
+    - intellectual_property
+    complexity:
+    - basic
+    - intermediate
+    - advanced
+  nuanced_attributes: {}
+  sampling:
+    target:
+    - 1
+    nuance:
+    - 0
+    total: 50
+  rubric:
+    legal_accuracy: The relevant legal rule is correctly identified and stated.
+    reasoning_quality: The rule is correctly applied to the facts with sound reasoning.
+    completeness: The analysis covers issue, rule, application, and conclusion.
+    clarity: The analysis is clearly and precisely written.
+  evaluation_mode: single
+  prompt_library:
+    sample: 'Generate a realistic, challenging benchmark data point for: {task_description}
+
+      Output format for the model under test: {output_description}
+
+      Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+      Return ONLY a JSON object with keys "prompt" (the question/scenario posed to the model) and "response" (an expert, correct
+      reference answer). Make the prompt specific and domain-authentic; do not copy any existing published item.
+
+      Example: {{"prompt": "...", "response": "..."}}'
+    test: 'You are answering a {task_description}
+
+      Output: {output_description}
+
+
+      {input}
+
+
+      Respond with only the answer.'
+experiment:
+  id: EXP006-vertical-case-studies
+  storage_folder: ./Runs
+  log_level: INFO
+  generation_retries: 2
+  phases:
+    attribute_mapping: New
+    rubric_mapping: New
+    data_generation: New
+    response_collection: New
+    evaluation: New
+  quota:
+    gpt-4o-mini:
+      max_calls: 4000
+    gpt-3.5-turbo:
+      max_calls: 4000
+    llama-3.2-3b:
+      max_calls: 4000
+    claude-haiku:
+      max_calls: 4000
+    gemini-flash:
+      max_calls: 4000

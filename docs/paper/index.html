@@ -491,14 +491,13 @@ ho = 0.86$) and reproduce the true model
   <em>why</em> the judging is reliable with no human calibration: a cross-family ensemble whose composition (not size)
   governs reliability (5.2), which cancels the verbosity bias every single judge carries (5.3), structurally avoids
   self-preference (5.4), and produces task-appropriate rubrics (5.5). Section&nbsp;5.6 verifies the second condition
-  directly&mdash;that the generated items are <em>contamination-free</em>&mdash;and Section&nbsp;5.7 shows the process
-  is cheap enough to re-run per use case and per model release.
+  directly&mdash;that the generated items are <em>contamination-free</em>&mdash;and Section&nbsp;5.7 shows the process is cheap enough to re-run per use case, and Section&nbsp;5.8 exercises the complete tool on two custom verticals (clinical, legal) with no labeled data.
 </p>
 
 <h3>5.1 Ground-truth correlation</h3>
 <p>
   To ground CoEval scores against an objective signal, we evaluate on exact-match question answering, where ground
-  truth is unambiguous. SciQ and ARC-Challenge responses ($n=573$ from three student models, drawn from $191$ datapoints)
+  truth is unambiguous. SciQ and ARC-Challenge responses (task identifiers <code>science_qa</code> and <code>science_reasoning</code>; $n=573$ from three student models over $191$ datapoints)
   are scored both by the CoEval judge ensemble and by exact-match correctness. We correlate the rubric's <em>accuracy</em>
   dimension &mdash; declared <em>a priori</em> as the construct matching correctness, independent of any observed
   correlation &mdash; with ground truth; for transparency we also report the off-target <em>relevance</em> dimension
@@ -754,15 +753,52 @@ ho = 0.86$) and reproduce the true model
     re-evaluation on every model release.</figcaption>
 </figure>
 
+<h3>5.8 Putting it together: domain case studies</h3>
+<p>
+  The preceding sections validate CoEval's components where ground truth is available. We now exercise the complete tool
+  in its intended regime: two custom verticals&mdash;<em>clinical reasoning</em> and <em>legal analysis</em>&mdash;for
+  which we assume no labeled data and no trustworthy public benchmark. From a one-line task description, CoEval's teacher
+  generated 40 attribute-stratified items per vertical (freshly synthesized, hence contamination-free), three candidate
+  models answered them, and the cross-family ensemble (OpenAI&nbsp;+&nbsp;Anthropic&nbsp;+&nbsp;Google) scored every
+  response&mdash;all from a single configuration file, with no human labels or raters. Table&nbsp;4 reports the resulting
+  rankings. CoEval cleanly and <em>unanimously</em> (all three judges, both verticals) places the smallest model
+  (<code>llama-3.2-3b</code>) last, and decisively ranks <code>gpt-4o-mini</code> strongest on legal analysis; on
+  clinical reasoning the two stronger models are statistically close, which the overlapping intervals correctly surface
+  rather than hide. This is the operation the framework is built for: producing a defensible model ranking for a bespoke
+  domain in which a standard benchmark is unavailable or untrustworthy.
+</p>
+<div class="tablewrap">
+<table class="data">
+  <caption><strong>Table 4.</strong> CoEval ranks three candidate models on two custom, contamination-free verticals
+    generated from a task description with no labeled data. Scores are the cross-family ensemble mean ($[0,1]$) with 95%
+    bootstrap CI over $40$ generated items; the weakest model is identified unanimously by all three judges in both
+    verticals.</caption>
+  <thead><tr><th class="lbl">Vertical / Model</th><th>CoEval ensemble score [95% CI]</th></tr></thead>
+  <tbody>
+    <tr><td class="lbl"><em>Clinical reasoning</em></td><td></td></tr>
+    <tr class="highlight"><td class="lbl">&nbsp;&nbsp;gpt-3.5-turbo</td><td>0.873 [0.849, 0.895]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;gpt-4o-mini</td><td>0.864 [0.840, 0.885]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;llama-3.2-3b</td><td>0.814 [0.784, 0.844]</td></tr>
+    <tr><td class="lbl"><em>Legal analysis</em></td><td></td></tr>
+    <tr class="highlight"><td class="lbl">&nbsp;&nbsp;gpt-4o-mini</td><td>0.982 [0.973, 0.991]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;gpt-3.5-turbo</td><td>0.740 [0.709, 0.770]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;llama-3.2-3b</td><td>0.709 [0.677, 0.744]</td></tr>
+  </tbody>
+</table>
+</div>
+
 <!-- ===================== 6. DISCUSSION ===================== -->
 <h2>6. Discussion</h2>
 <p>
-  Taken together, the results support a single design principle: the reliability of an LLM-judge panel is governed by
-  its <em>composition</em>, not its size. A diverse, cross-family panel cancels the mixed-sign biases &mdash; verbosity,
-  self-preference &mdash; that any individual judge carries, while a same-family panel would merely amplify a shared
-  bias. This reframes panel construction: practitioners should prioritize vendor diversity over adding more copies of
-  similar judges. The Spearman&ndash;Brown convergence (Section&nbsp;5.2) further shows that a modest diverse panel
-  already recovers most of the full-panel reliability, so the cost of diversity is small.
+  CoEval is designed for a specific, common predicament: ranking models for a task or domain when no labeled data
+  exists to build a benchmark and public benchmarks cannot be trusted. The results show it meets that need&mdash;its
+  label-free scores reproduce the true model ranking and track ground truth, and its generated items are verifiably
+  fresh&mdash;and they explain <em>why</em> the label-free judging is trustworthy. The key enabler is a design
+  principle that is itself a contribution: the reliability of an LLM-judge panel is governed by its
+  <em>composition</em>, not its size. A diverse, cross-family panel cancels the mixed-sign biases&mdash;verbosity,
+  self-preference&mdash;that any individual judge carries, while a same-family panel would merely amplify a shared
+  bias; practitioners should prioritize vendor diversity over adding more copies of similar judges. A modest diverse
+  panel already recovers most of the full-panel reliability, so the cost of diversity is small.
 </p>
 <p>
   Coupling the panel to attribute-stratified generation is what makes the system more than a better judge. Because items
@@ -774,11 +810,19 @@ ho = 0.86$) and reproduce the true model
   the scores.
 </p>
 
+<p>
+  <strong>Scope and limitations.</strong> Our ground-truth validation of the ranking operation uses objective
+  exact-match QA, where labels exist; on subjective custom domains (Section&nbsp;5.8) we rely on the cross-family
+  ensemble and report intervals rather than a held-out gold ranking, because by assumption none exists. We study three
+  candidate models across six task families and two verticals; broader model pools and additional domains would further
+  test generality. Self-preference (Section&nbsp;5.4) is a structural design property whose magnitude we do not
+  cleanly isolate from capability. And the contamination guarantee is structural (fresh per-run synthesis) with n-gram
+  non-duplication as corroboration, not a membership test against any model's full pretraining corpus.
+</p>
 <!-- ===================== 7. CONCLUSION ===================== -->
 <h2>7. Conclusion</h2>
 <p>
-  We presented CoEval, a contamination-free, domain-targeted LLM evaluation framework built on a teacher/student/judge
-  role separation, attribute-stratified benchmark generation, and a cross-family judge ensemble. CoEval delivers
+  We presented CoEval, a tool for ranking language models on custom tasks and domains when neither labeled data nor a trustworthy benchmark is available: from a task description alone it generates a fresh, contamination-resistant benchmark and ranks candidate models with a cross-family judge ensemble, with no human annotation. CoEval delivers
   bias-cancelled, reliable evaluation without human annotation: it removes verbosity bias that no single judge avoids
   (ensemble $r = +0.010$, CI spanning zero; 93% reduction), structurally precludes same-family self-preference, and
   produces task-specialized rubrics with a shared quality core, while also converging

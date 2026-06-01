@@ -1,0 +1,18 @@
+{
+  "mode": "full",
+  "on_fail": "abort",
+  "results": {
+    "gpt-4o-mini": "ok",
+    "gpt-3.5-turbo": "ok",
+    "llama-3.2-3b": "ok",
+    "claude-haiku": "ok",
+    "gemini-flash": "ok"
+  },
+  "probed_models": [
+    "claude-haiku",
+    "gemini-flash",
+    "gpt-3.5-turbo",
+    "gpt-4o-mini",
+    "llama-3.2-3b"
+  ]
+}
