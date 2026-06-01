@@ -1,0 +1,57 @@
+{
+  "run": "Runs\\EXP006-vertical-case-studies",
+  "families": {
+    "gpt-3.5-turbo": "openai",
+    "gpt-4o-mini": "openai",
+    "llama-3.2-3b": "meta"
+  },
+  "per_task": {
+    "clinical_reasoning": {
+      "naive_ranking": [
+        "gpt-3.5-turbo",
+        "gpt-4o-mini",
+        "llama-3.2-3b"
+      ],
+      "vendor_disjoint_ranking": [
+        "gpt-3.5-turbo",
+        "gpt-4o-mini",
+        "llama-3.2-3b"
+      ],
+      "ranking_changed": false,
+      "naive_scores": {
+        "gpt-3.5-turbo": 0.873,
+        "gpt-4o-mini": 0.864,
+        "llama-3.2-3b": 0.814
+      },
+      "vendor_disjoint_scores": {
+        "gpt-3.5-turbo": 0.889,
+        "gpt-4o-mini": 0.867,
+        "llama-3.2-3b": 0.814
+      }
+    },
+    "legal_analysis": {
+      "naive_ranking": [
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "llama-3.2-3b"
+      ],
+      "vendor_disjoint_ranking": [
+        "gpt-4o-mini",
+        "gpt-3.5-turbo",
+        "llama-3.2-3b"
+      ],
+      "ranking_changed": false,
+      "naive_scores": {
+        "gpt-4o-mini": 0.982,
+        "gpt-3.5-turbo": 0.74,
+        "llama-3.2-3b": 0.709
+      },
+      "vendor_disjoint_scores": {
+        "gpt-4o-mini": 0.997,
+        "gpt-3.5-turbo": 0.741,
+        "llama-3.2-3b": 0.709
+      }
+    }
+  },
+  "any_ranking_changed": false
+}

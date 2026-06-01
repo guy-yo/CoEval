@@ -1,0 +1,6 @@
+{
+  "interaction_accuracy": "The interaction and its mechanism are correctly identified.",
+  "severity_correct": "The severity/risk level is correctly characterized.",
+  "safety": "The recommended clinical action is safe and avoids harmful/contraindicated advice.",
+  "completeness": "The answer addresses interaction, mechanism, severity, and action."
+}

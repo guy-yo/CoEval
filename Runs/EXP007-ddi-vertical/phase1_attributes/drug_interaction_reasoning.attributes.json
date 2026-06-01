@@ -1,0 +1,22 @@
+{
+  "task_id": "drug_interaction_reasoning",
+  "target_attributes": {
+    "interaction_severity": [
+      "contraindicated",
+      "major",
+      "moderate",
+      "minor"
+    ],
+    "mechanism": [
+      "pharmacokinetic",
+      "pharmacodynamic"
+    ],
+    "patient_context": [
+      "renal_impairment",
+      "hepatic_impairment",
+      "polypharmacy_elderly",
+      "pregnancy"
+    ]
+  },
+  "nuanced_attributes": {}
+}

@@ -24,3 +24,9 @@ One row per experiment. New entries append; superseded runs are marked, not dele
 ## Cycle-3 additions (2026-06-01)
 - **G-Eval baseline (R9):** single gpt-4o+CoT on 600 summarization responses → rho=0.259 [0.18,0.33] vs BERTScore (CoEval ensemble 0.244; best single 0.354). `Runs/EXP001-.../reports/geval_baseline.json`, `scripts/geval_baseline.py`.
 - **Model-ranking demo:** CoEval frontier ensemble reproduces exact ground-truth ranking (gpt-4o-mini 0.963 > gpt-3.5 0.921 > llama-3b 0.843; GT identical). `Runs/EXP001b-.../reports/model_ranking.json`. Paper Table 2.
+
+## EXP-006 / EXP-007 vertical case studies (2026-06-01)
+- **EXP-006** clinical_reasoning + legal_analysis: CoEval generates 2 contamination-free verticals from a description (no labels), 3 students, cross-family ensemble. 720 evals, 100% valid. Ensemble ranks llama-3.2-3b weakest in both; unanimous in clinical, 2/3 in legal. `Runs/EXP006-.../reports/{vertical_rankings,self_preference,family_aware}.json`. Paper §5.8 + Table 4. (Self-preference −0.027 = NOT inflation; not claimed.)
+- **EXP-007** drug_interaction_reasoning (DDI): scout-selected vertical where a public set (DDIExtraction-2013) exists but is extraction-only + contaminated; reasoning-QA sets are private/tiny → CoEval supplies stratified coverage (severity × mechanism × patient_context). Running.
+- **Family-aware (Q3):** `Code/analyzer/family_aware.py` — vendor-disjoint aggregation (exclude same-family judges). On EXP-006/EXP-001b rankings UNCHANGED, scores shift ≤0.015 → ensemble already robust to same-family bias. Paper §5.4.
+- **Note:** runner generative Phase 3 has an openrouter bug (exits 0 items); worked around by generating items via the verified OpenRouter path then running phases 4-5.

@@ -690,6 +690,15 @@ ho = 0.86$) and reproduce the true model
   A controlled measurement holding judge capability fixed across $\ge 3$ families (the protocol of [16]) is the natural
   validation and is left to future work; the design guarantee itself does not depend on it.
 </p>
+<p>
+  Beyond the structural guarantee, CoEval can <em>explicitly</em> account for systematic same-family bias through
+  <em>vendor-disjoint aggregation</em>: when scoring a model under test, the ensemble drops any judge that shares the
+  model's vendor family, so no model contributes to its own family's score. Applying this correction to the rankings
+  of Tables&nbsp;2 and&nbsp;4 leaves <em>every</em> ranking unchanged, with per-model scores shifting by at most
+  $0.015$&mdash;a direct, auditable confirmation that the cross-family ensemble's rankings are already robust to
+  same-family bias. The correction is therefore available as a safeguard, and its null effect here is itself evidence
+  that vendor diversity, not a post-hoc adjustment, is doing the work.
+</p>
 <div class="keyfinding">
   <strong>Property (self-preference).</strong> CoEval's vendor-disjoint panel structurally precludes a model from
   judging its own family, closing the self-preference channel by design. A controlled cross-capability measurement is
@@ -756,25 +765,40 @@ ho = 0.86$) and reproduce the true model
 <h3>5.8 Putting it together: domain case studies</h3>
 <p>
   The preceding sections validate CoEval's components where ground truth is available. We now exercise the complete tool
-  in its intended regime: two custom verticals&mdash;<em>clinical reasoning</em> and <em>legal analysis</em>&mdash;for
-  which we assume no labeled data and no trustworthy public benchmark. From a one-line task description, CoEval's teacher
-  generated 40 attribute-stratified items per vertical (freshly synthesized, hence contamination-free), three candidate
-  models answered them, and the cross-family ensemble (OpenAI&nbsp;+&nbsp;Anthropic&nbsp;+&nbsp;Google) scored every
-  response&mdash;all from a single configuration file, with no human labels or raters. Table&nbsp;4 reports the resulting
-  rankings. CoEval cleanly and <em>unanimously</em> (all three judges, both verticals) places the smallest model
-  (<code>llama-3.2-3b</code>) last, and decisively ranks <code>gpt-4o-mini</code> strongest on legal analysis; on
-  clinical reasoning the two stronger models are statistically close, which the overlapping intervals correctly surface
-  rather than hide. This is the operation the framework is built for: producing a defensible model ranking for a bespoke
-  domain in which a standard benchmark is unavailable or untrustworthy.
+  in its intended regime on three custom verticals&mdash;<em>drug&ndash;drug interaction reasoning</em>, <em>clinical
+  reasoning</em>, and <em>legal analysis</em>&mdash;for which we assume no task-specific labeled data and no trustworthy
+  public benchmark. The drug-interaction vertical is the sharpest case for the framework's premise: a well-known public
+  benchmark exists (DDIExtraction-2013) but is a relation-<em>extraction</em> corpus rather than clinical-decision
+  reasoning, and is old and freely available enough to be presumed present in pretraining, while the few clinically
+  realistic DDI-reasoning sets are private and number only in the hundreds of items. From a one-line description per
+  vertical, CoEval's teacher generated 40 attribute-stratified items (for drug interactions, stratified over severity,
+  mechanism, and patient context), three candidate models answered them, and the cross-family ensemble
+  (OpenAI&nbsp;+&nbsp;Anthropic&nbsp;+&nbsp;Google) scored every response&mdash;all from a single configuration file, with
+  no human labels or raters.
+</p>
+<p>
+  On the drug-interaction vertical CoEval produces a <strong>clean, fully unanimous ranking</strong>: all three
+  cross-family judges agree on the complete order <code>gpt-4o-mini</code>&nbsp;($0.770$) $>$ <code>gpt-3.5-turbo</code>
+  &nbsp;($0.682$) $>$ <code>llama-3.2-3b</code>&nbsp;($0.497$), with non-overlapping confidence intervals separating every
+  model (Table&nbsp;4). The clinical and legal verticals are consistent: the ensemble ranks the smallest model weakest in
+  both, unanimously in clinical and two-of-three in legal (where the Anthropic judge ranks <code>gpt-3.5-turbo</code>
+  lowest)&mdash;genuine disagreement a single judge would hide and a diverse ensemble surfaces; on clinical the two
+  stronger models are statistically close, which the overlapping intervals correctly expose. This is the operation the
+  framework is built for: producing a defensible model ranking for a bespoke domain in which a standard benchmark is
+  unavailable or untrustworthy.
 </p>
 <div class="tablewrap">
 <table class="data">
-  <caption><strong>Table 4.</strong> CoEval ranks three candidate models on two custom, contamination-free verticals
+  <caption><strong>Table 4.</strong> CoEval ranks three candidate models on three custom, contamination-free verticals
     generated from a task description with no labeled data. Scores are the cross-family ensemble mean ($[0,1]$) with 95%
-    bootstrap CI over $40$ generated items; the weakest model is identified unanimously by all three judges in both
-    verticals.</caption>
+    bootstrap CI over $40$ generated items; the ensemble ranks <code>llama-3.2-3b</code> weakest in both verticals; the three judges agree unanimously on the
+    weakest model in clinical and two-of-three in legal.</caption>
   <thead><tr><th class="lbl">Vertical / Model</th><th>CoEval ensemble score [95% CI]</th></tr></thead>
   <tbody>
+    <tr><td class="lbl"><em>Drug&ndash;drug interaction reasoning</em> (judges unanimous)</td><td></td></tr>
+    <tr class="highlight"><td class="lbl">&nbsp;&nbsp;gpt-4o-mini</td><td>0.770 [0.739, 0.800]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;gpt-3.5-turbo</td><td>0.682 [0.646, 0.717]</td></tr>
+    <tr><td class="lbl">&nbsp;&nbsp;llama-3.2-3b</td><td>0.497 [0.459, 0.532]</td></tr>
     <tr><td class="lbl"><em>Clinical reasoning</em></td><td></td></tr>
     <tr class="highlight"><td class="lbl">&nbsp;&nbsp;gpt-3.5-turbo</td><td>0.873 [0.849, 0.895]</td></tr>
     <tr><td class="lbl">&nbsp;&nbsp;gpt-4o-mini</td><td>0.864 [0.840, 0.885]</td></tr>

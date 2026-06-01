@@ -1,0 +1,47 @@
+{
+  "task": "drug_interaction_reasoning",
+  "coeval_ranking": [
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "llama-3.2-3b"
+  ],
+  "scores": {
+    "gpt-4o-mini": 0.77,
+    "gpt-3.5-turbo": 0.682,
+    "llama-3.2-3b": 0.497
+  },
+  "cis": {
+    "gpt-4o-mini": [
+      0.739,
+      0.8
+    ],
+    "gpt-3.5-turbo": [
+      0.646,
+      0.717
+    ],
+    "llama-3.2-3b": [
+      0.459,
+      0.532
+    ]
+  },
+  "per_judge_ranking": {
+    "claude-haiku": [
+      "gpt-4o-mini",
+      "gpt-3.5-turbo",
+      "llama-3.2-3b"
+    ],
+    "gemini-flash": [
+      "gpt-4o-mini",
+      "gpt-3.5-turbo",
+      "llama-3.2-3b"
+    ],
+    "gpt-4o-mini": [
+      "gpt-4o-mini",
+      "gpt-3.5-turbo",
+      "llama-3.2-3b"
+    ]
+  },
+  "judges_unanimous": true,
+  "weakest_unanimous": true,
+  "n_items": 40
+}

@@ -1,0 +1,144 @@
+models:
+- name: gpt-4o-mini
+  interface: openrouter
+  parameters:
+    model: openai/gpt-4o-mini
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - teacher
+  - student
+  - judge
+  role_parameters:
+    teacher:
+      temperature: 0.8
+      max_tokens: 640
+    student:
+      temperature: 0.7
+      max_tokens: 256
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+- name: gpt-3.5-turbo
+  interface: openrouter
+  parameters:
+    model: openai/gpt-3.5-turbo
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - student
+  role_parameters:
+    student:
+      temperature: 0.7
+      max_tokens: 256
+- name: llama-3.2-3b
+  interface: openrouter
+  parameters:
+    model: meta-llama/llama-3.2-3b-instruct
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - student
+  role_parameters:
+    student:
+      temperature: 0.7
+      max_tokens: 256
+- name: claude-haiku
+  interface: openrouter
+  parameters:
+    model: anthropic/claude-3.5-haiku
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - judge
+  role_parameters:
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+- name: gemini-flash
+  interface: openrouter
+  parameters:
+    model: google/gemini-2.5-flash
+    temperature: 0.7
+    max_tokens: 640
+  roles:
+  - judge
+  role_parameters:
+    judge:
+      temperature: 0.0
+      max_tokens: 128
+tasks:
+- name: drug_interaction_reasoning
+  description: 'a drug-drug interaction clinical-reasoning question: given two or more co-administered drugs and a patient
+    context, identify the interaction, its mechanism and severity, and the correct clinical action.'
+  output_description: 'A concise, clinically correct answer (2-5 sentences): the interaction, its mechanism (pharmacokinetic/pharmacodynamic)
+    and severity, and the safe clinical recommendation.'
+  target_attributes:
+    interaction_severity:
+    - contraindicated
+    - major
+    - moderate
+    - minor
+    mechanism:
+    - pharmacokinetic
+    - pharmacodynamic
+    patient_context:
+    - renal_impairment
+    - hepatic_impairment
+    - polypharmacy_elderly
+    - pregnancy
+  nuanced_attributes: {}
+  sampling:
+    target:
+    - 1
+    nuance:
+    - 0
+    total: 50
+  rubric:
+    interaction_accuracy: The interaction and its mechanism are correctly identified.
+    severity_correct: The severity/risk level is correctly characterized.
+    safety: The recommended clinical action is safe and avoids harmful/contraindicated advice.
+    completeness: The answer addresses interaction, mechanism, severity, and action.
+  evaluation_mode: single
+  prompt_library:
+    sample: 'Generate a realistic, challenging benchmark data point for: {task_description}
+
+      Output format for the model under test: {output_description}
+
+      Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+      Return ONLY a JSON object with keys "prompt" (the question/scenario posed to the model) and "response" (an expert, correct
+      reference answer). Make the prompt specific and domain-authentic; do not copy any existing published item.
+
+      Example: {{"prompt": "...", "response": "..."}}'
+    test: 'You are answering a {task_description}
+
+      Output: {output_description}
+
+
+      {input}
+
+
+      Respond with only the answer.'
+experiment:
+  id: EXP007-ddi-vertical
+  storage_folder: ./Runs
+  log_level: INFO
+  generation_retries: 2
+  phases:
+    attribute_mapping: New
+    rubric_mapping: New
+    data_generation: New
+    response_collection: New
+    evaluation: New
+  quota:
+    gpt-4o-mini:
+      max_calls: 4000
+    gpt-3.5-turbo:
+      max_calls: 4000
+    llama-3.2-3b:
+      max_calls: 4000
+    claude-haiku:
+      max_calls: 4000
+    gemini-flash:
+      max_calls: 4000
