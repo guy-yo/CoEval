@@ -4,7 +4,7 @@
   "spearman_vs_bertscore": 0.2589,
   "lo": 0.1786,
   "hi": 0.3339,
-  "coeval_ensemble_vs_bertscore": 0.241,
+  "coeval_ensemble_vs_bertscore": 0.244,
   "coeval_best_single_judge": 0.354,
   "score_dist": {
     "1": 8,

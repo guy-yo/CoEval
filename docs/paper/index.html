@@ -684,15 +684,19 @@ $$ \kappa \;=\; \frac{p_o - p_e}{1 - p_e}, $$
   from five widely used public benchmarks (XSum, CNN/DailyMail, CodeSearchNet, SciQ, ARC-Challenge)&mdash;datasets that
   are, by virtue of their age and popularity, present in the pretraining corpora of current models. Across
   $110{,}784$ distinct public 13-grams, <strong>not a single CoEval-generated item shares any 13-gram</strong> with the
-  public corpus: mean and maximum overlap are both $0.0000$, and $0\%$ of generated items have any overlap. Freshly
-  generated items are thus novel by construction <em>and</em> in measurement, so a model cannot have memorized them from
-  a leaked public test set. (We re-emphasize the scope from Section&nbsp;5.1: this property holds for CoEval's generated
-  items; the benchmark-grounded anchor of Table&nbsp;1 deliberately reuses public items to obtain objective ground truth.)
+  public corpus: mean and maximum overlap are both $0.0000$, and $0\%$ of generated items share any 13-gram. This
+  measures verbatim non-duplication of the sampled public test sets&mdash;it does not, on its own, certify absence from
+  the full (unobservable) pretraining corpus, and it is defeated in principle by paraphrase. It nonetheless
+  <em>corroborates</em> the real guarantee, which is structural: because items are synthesized fresh from the attribute
+  specification on each run, they cannot have appeared in any model's <em>prior</em> training, and a model cannot retrieve
+  them from a leaked copy of these widely-used benchmarks. (We re-emphasize the scope from Section&nbsp;5.1: this holds
+  for CoEval's generated items; the benchmark-grounded anchor of Table&nbsp;1 deliberately reuses public items to obtain
+  objective ground truth.)
 </p>
 <div class="keyfinding">
-  <strong>Finding (contamination).</strong> CoEval-generated items have $0.0000$ 13-gram overlap with five major public
-  benchmarks ($n=400$ vs $491$ items), an empirical confirmation that generated evaluation items are not present in
-  models' pretraining data.
+  <strong>Finding (contamination).</strong> CoEval-generated items show $0.0000$ verbatim 13-gram overlap with five
+  major public benchmarks ($n=400$ vs $491$ items; $110{,}784$ distinct public 13-grams), corroborating&mdash;alongside
+  the structural freshness guarantee&mdash;that generated evaluation items are not leaked copies of public test sets.
 </div>
 
 <h3>5.7 Cost</h3>

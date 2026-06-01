@@ -1,7 +1,15 @@
 {
   "metric": "13-gram verbatim overlap, CoEval-generated vs public benchmarks",
+  "public_benchmarks": [
+    "xsum",
+    "cnn_dailymail",
+    "codesearchnet",
+    "sciq",
+    "arc_challenge"
+  ],
   "n_generated": 400,
   "n_public": 491,
+  "n_public_distinct_ngrams": 110784,
   "mean_overlap": 0.0,
   "max_overlap": 0.0,
   "frac_items_any_overlap": 0.0
