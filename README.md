@@ -166,42 +166,44 @@ pip install coeval
 # 2. Add your API keys  (see: docs/tutorial.md § 2)
 cp keys.yaml.template keys.yaml   # then fill in your provider keys
 
-# 3. Probe all models — no tokens consumed
-coeval probe --config benchmark/mixed.yaml
+# 3. Probe all models — no tokens consumed  (runnable example included in the repo)
+coeval probe --config examples/quickstart.yaml
 
 # 4. Estimate cost before spending anything
-coeval plan --config benchmark/mixed.yaml
+coeval plan --config examples/quickstart.yaml
 
-# 5. Run the experiment
-coeval run --config benchmark/mixed.yaml --continue
+# 5. Run the experiment (phases 1-5: infer attributes + rubric, generate, respond, judge)
+coeval run --config examples/quickstart.yaml
 
 # 6. Generate analysis reports
-coeval analyze all --run ./eval_runs/mixed-benchmark --out ./reports
+coeval analyze all --run ./Runs/quickstart --out ./Runs/quickstart/reports
 ```
 
-### Minimal experiment config
+### Minimal experiment config (most-automatic level)
+
+You give only a task description and the models; CoEval infers the target attributes
+and the scoring rubric. See the complete runnable file at `examples/quickstart.yaml`.
 
 ```yaml
 models:
   - name: gpt-4o-mini
-    interface: openai
-    parameters: { model: gpt-4o-mini, temperature: 0.7, max_tokens: 512 }
+    interface: openrouter
+    parameters: { model: openai/gpt-4o-mini, temperature: 0.7, max_tokens: 512 }
     roles: [teacher, student, judge]
+  - name: claude-haiku
+    interface: openrouter
+    parameters: { model: anthropic/claude-3.5-haiku, temperature: 0.0, max_tokens: 128 }
+    roles: [judge]            # cross-family judge
 
 tasks:
-  - name: text_sentiment
-    description: Classify the sentiment of a short customer review.
-    output_description: A single word — either Positive or Negative.
-    target_attributes:
-      sentiment: [positive, negative]
-      intensity:  [mild, strong]
-    sampling: { target: [1,1], nuance: [0,1], total: 20 }
-    rubric:
-      accuracy: "The label matches the actual sentiment of the review."
+  - name: regex_explanation
+    description: Explain in plain English what a given regular expression matches.
+    output_description: A clear one-to-three sentence plain-English explanation.
+    sampling: { total: 6 }    # target_attributes + rubric are inferred (Phases 1-2)
     evaluation_mode: single
 
 experiment:
-  id: sentiment-v1
+  id: quickstart
   storage_folder: ./eval_runs
 ```
 

@@ -237,19 +237,22 @@ def _parse_model(raw: dict) -> ModelConfig:
 
 def _parse_task(raw: dict) -> TaskConfig:
     s = raw.get('sampling', {})
+    # Defaults enable the most-automatic specification level: a task may give only
+    # name + description + output_description + sampling.total, and CoEval infers the
+    # target attributes (Phase 1) and rubric (Phase 2). Explicit values override.
     sampling = SamplingConfig(
-        target=s['target'],
-        nuance=s['nuance'],
+        target=s.get('target', [1]),
+        nuance=s.get('nuance', [0]),
         total=int(s['total']),
     )
     return TaskConfig(
         name=raw['name'],
         description=raw['description'],
         output_description=raw['output_description'],
-        target_attributes=raw['target_attributes'],
-        nuanced_attributes=raw['nuanced_attributes'],
+        target_attributes=raw.get('target_attributes', 'auto'),
+        nuanced_attributes=raw.get('nuanced_attributes', {}),
         sampling=sampling,
-        rubric=raw['rubric'],
+        rubric=raw.get('rubric', 'auto'),
         target_attributes_seed=raw.get('target_attributes_seed'),
         nuanced_attributes_seed=raw.get('nuanced_attributes_seed'),
         store_nuanced=bool(raw.get('store_nuanced', False)),

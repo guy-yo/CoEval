@@ -1,0 +1,58 @@
+# CoEval quick-start: rank models on a NEW custom task with the most automatic
+# level of specification -- you provide only a task description and the models;
+# CoEval infers the target attributes (Phase 1) and the scoring rubric (Phase 2),
+# generates a fresh contamination-free benchmark (Phase 3), collects student
+# responses (Phase 4), and scores them with a cross-family judge ensemble (Phase 5).
+#
+# Run end-to-end:
+#   coeval probe --config examples/quickstart.yaml      # check models are reachable (no spend)
+#   coeval plan  --config examples/quickstart.yaml      # estimate cost + calls
+#   coeval run   --config examples/quickstart.yaml      # phases 1-5
+#   coeval analyze all --run ./Runs/quickstart --out ./Runs/quickstart/reports
+
+models:
+  # One model serves teacher + student + judge; the rest are students / judges.
+  - name: gpt-4o-mini
+    interface: openrouter
+    parameters: {model: openai/gpt-4o-mini, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student, judge]
+    role_parameters:
+      judge: {temperature: 0.0, max_tokens: 128}
+  - name: gpt-3.5-turbo
+    interface: openrouter
+    parameters: {model: openai/gpt-3.5-turbo, temperature: 0.7, max_tokens: 512}
+    roles: [student]
+  - name: llama-3.2-3b
+    interface: openrouter
+    parameters: {model: meta-llama/llama-3.2-3b-instruct, temperature: 0.7, max_tokens: 512}
+    roles: [student]
+  # Cross-family judges (vendor-disjoint from the OpenAI students they score).
+  - name: claude-haiku
+    interface: openrouter
+    parameters: {model: anthropic/claude-3.5-haiku, temperature: 0.0, max_tokens: 128}
+    roles: [judge]
+  - name: gemini-flash
+    interface: openrouter
+    parameters: {model: google/gemini-2.5-flash, temperature: 0.0, max_tokens: 128}
+    roles: [judge]
+
+tasks:
+  - name: regex_explanation
+    description: Explain in plain English what a given regular expression matches.
+    output_description: A clear one-to-three sentence plain-English explanation of what the regex matches, including any notable edge cases.
+    sampling: {total: 6}          # 6 generated items (keep small for a quick-start smoke)
+    evaluation_mode: single
+    # No target_attributes and no rubric are given on purpose: CoEval infers both
+    # from the description in Phases 1-2. To supply them yourself (semi-automatic),
+    # add `target_attributes:` and `rubric:` blocks as in Runs/EXP007-ddi-vertical/config.yaml.
+
+experiment:
+  id: quickstart
+  storage_folder: ./Runs
+  log_level: INFO
+  phases:
+    attribute_mapping: New
+    rubric_mapping: New
+    data_generation: New
+    response_collection: New
+    evaluation: New

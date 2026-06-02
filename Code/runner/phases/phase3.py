@@ -565,8 +565,12 @@ def _sample_attrs(attr_map: dict[str, list], target_spec) -> dict[str, str]:
     if target_spec == 'all':
         selected_names = attr_names
     else:
-        lo, hi = int(target_spec[0]), int(target_spec[1])
-        n = random.randint(lo, min(hi, len(attr_names)))
+        # Accept [min, max], or a single-element [n] (treated as [n, n]), or a
+        # bare int n. Tolerating the short forms keeps existing configs working.
+        spec = target_spec if isinstance(target_spec, (list, tuple)) else [target_spec]
+        lo = int(spec[0])
+        hi = int(spec[1]) if len(spec) > 1 else lo
+        n = max(0, min(random.randint(lo, hi), len(attr_names)))
         selected_names = random.sample(attr_names, n)
 
     return {
