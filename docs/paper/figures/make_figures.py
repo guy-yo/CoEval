@@ -71,23 +71,35 @@ def f3_verbosity_forest():
 
 
 def f4_correctness_corr():
-    """F4: per-judge + ensemble Spearman rho with ground-truth correctness (QA accuracy)."""
-    d = _load("EXP001b-exactmatch-qa/reports/benchmark_correlation_accuracy.json")
-    perj = d["per_judge"]
-    names = sorted(perj, key=lambda j: perj[j]["overall"]["rho"])
-    vals = [perj[j]["overall"]["rho"] for j in names]
-    ens = d["ensemble"]["overall"]
-    fig, ax = plt.subplots(figsize=(5.6, 3.6))
-    yy = list(range(len(names)))
-    ax.barh(yy, vals, color=BLUE, alpha=0.85)
-    ax.barh([len(names) + 0.3], [ens["rho"]], color=GREEN,
-            xerr=[[ens["rho"] - ens["lo"]], [ens["hi"] - ens["rho"]]], capsize=4)
-    ax.set_yticks(yy + [len(names) + 0.3])
-    ax.set_yticklabels([n.replace("single judge: ", "") for n in
-                        [perj[j]["method"] for j in names]] + ["CoEval ensemble"], fontsize=9)
-    ax.set_xlabel("Spearman ρ with ground-truth correctness")
-    ax.set_xlim(0, 1)
-    ax.set_title("CoEval tracks ground-truth correctness (ρ ≈ 0.86)")
+    """F4: CoEval recovers the true model ranking with no labels (QA accuracy).
+
+    Earlier this figure plotted per-judge vs ensemble correlation, but on objective
+    QA every capable judge converges to ~0.85, so the bars were visually identical
+    and read as "the ensemble adds nothing". The decisive evidence for the use case
+    is that CoEval's label-free scores reproduce the ground-truth ranking; we plot
+    that directly (the ensemble-vs-single-judge advantage is Figure 4 / Section 5.3)."""
+    d = _load("EXP001b-exactmatch-qa/reports/model_ranking.json")
+    rows = d["ranking"]  # already best -> worst
+    models = [r["student"] for r in rows]
+    coe = [r["coeval_score"] for r in rows]
+    err = [[r["coeval_score"] - r["lo"] for r in rows], [r["hi"] - r["coeval_score"] for r in rows]]
+    gt = [r["ground_truth_acc"] for r in rows]
+    y = np.arange(len(models))[::-1]  # best model at the top
+    h = 0.36
+    fig, ax = plt.subplots(figsize=(5.8, 3.4))
+    ax.barh(y + h / 2, coe, height=h, color=GREEN, alpha=0.9,
+            xerr=err, capsize=4, label="CoEval score (no labels)")
+    ax.barh(y - h / 2, gt, height=h, color=BLUE, alpha=0.75,
+            label="Ground-truth accuracy")
+    for yi, c, g in zip(y, coe, gt):
+        ax.text(c + 0.012, yi + h / 2, f"{c:.2f}", va="center", fontsize=7.5)
+        ax.text(g + 0.012, yi - h / 2, f"{g:.2f}", va="center", fontsize=7.5)
+    ax.set_yticks(y)
+    ax.set_yticklabels(models, fontsize=9)
+    ax.set_xlim(0, 1.14)
+    ax.set_xlabel("Score")
+    ax.set_title("CoEval recovers the true model ranking with no labels")
+    ax.legend(loc="lower right", fontsize=8, frameon=True, framealpha=0.92, edgecolor="none")
     fig.tight_layout(); fig.savefig(FIG / "f4_correctness_corr.png", bbox_inches="tight"); plt.close(fig)
 
 

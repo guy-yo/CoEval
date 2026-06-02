@@ -540,22 +540,21 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   opposite sign that the ensemble provably cancels (Section&nbsp;5.3), paired with the contamination-resistant items
   CoEval <em>generates</em> rather than consumes; these are properties no single judge provides.
 </p>
-<figure>
-  <img src="figures/f4_correctness_corr.png" alt="Spearman correlation with ground-truth correctness per judge and ensemble"/>
-  <figcaption><strong>Figure 2.</strong> Rank correlation of CoEval accuracy scores with ground-truth answer correctness
-    on exact-match QA ($191$ datapoints, $573$ responses). The frontier cross-family ensemble reaches $\rho = 0.86$
-    (datapoint-clustered 95% CI shown); the three frontier judges converge on identical labels, so the ensemble equals
-    its best member here, a vendor-independent reliability floor on objective tasks.</figcaption>
-</figure>
-
 <p>
   Evaluation is a means to an end, <em>ranking</em> candidate models for a use case, so we verify that CoEval
-  scores yield the correct ranking. Table&nbsp;2 ranks the three student models by their CoEval frontier-ensemble
+  scores yield the correct ranking. Figure&nbsp;2 and Table&nbsp;2 rank the three student models by their CoEval frontier-ensemble
   accuracy score and, independently, by ground-truth correctness. The two rankings are <strong>identical</strong>;
   CoEval's scores fall within $0.02$ of the true accuracies, and the confidence intervals cleanly separate the weakest
   model. Producing this ranking required a single configuration file and no human annotation: the core operation
   the framework is built to make easy.
 </p>
+<figure>
+  <img src="figures/f4_correctness_corr.png" alt="CoEval ensemble score versus ground-truth accuracy per model; rankings identical"/>
+  <figcaption><strong>Figure 2.</strong> CoEval recovers the true model ranking with no labels. For each student model
+    the CoEval frontier-ensemble accuracy score (green, datapoint-clustered 95% CI) and the held-out ground-truth
+    accuracy (blue) coincide within $0.02$, and the order <code>gpt-4o-mini</code> &gt; <code>gpt-3.5-turbo</code> &gt;
+    <code>llama-3.2-3b</code> is reproduced exactly (cf. Table&nbsp;2).</figcaption>
+</figure>
 <div class="tablewrap">
 <table class="data">
   <caption><strong>Table 2.</strong> CoEval reproduces the ground-truth model ranking. Three student models ranked by
