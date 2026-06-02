@@ -1,0 +1,32 @@
+{
+  "drug_interaction_reasoning": {
+    "n_items": 40,
+    "self_preference": -0.0422,
+    "ci95": [
+      -0.0906,
+      0.0031
+    ],
+    "p_one_sided_gt0": 0.967,
+    "significant_flip_direction": false
+  },
+  "clinical_reasoning": {
+    "n_items": 40,
+    "self_preference": 0.0375,
+    "ci95": [
+      -0.0031,
+      0.075
+    ],
+    "p_one_sided_gt0": 0.0384,
+    "significant_flip_direction": false
+  },
+  "legal_analysis": {
+    "n_items": 40,
+    "self_preference": -0.0406,
+    "ci95": [
+      -0.1062,
+      0.0172
+    ],
+    "p_one_sided_gt0": 0.9132,
+    "significant_flip_direction": false
+  }
+}
