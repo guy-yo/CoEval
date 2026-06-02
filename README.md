@@ -179,6 +179,37 @@ coeval run --config examples/quickstart.yaml
 coeval analyze all --run ./Runs/quickstart --out ./Runs/quickstart/reports
 ```
 
+### Levels of specification
+
+CoEval accepts your intent at whichever level of detail you have, from a single
+sentence to a fully hand-written config:
+
+| Level | You provide | CoEval infers | How |
+|-------|-------------|---------------|-----|
+| **Objective** | one-line goal | everything: tasks, attributes, rubric, model roles | `coeval wizard --objective "..."` |
+| **Most-automatic** | task description + models | target attributes + rubric (Phases 1-2) | hand-write a minimal YAML (below) |
+| **Semi-automatic** | description + some attributes/rubric | the rest | partial YAML, human-in-the-loop wizard |
+| **Manual** | full config | nothing | complete YAML |
+
+Generate a complete, runnable config from a single high-level objective (no
+questions asked) and run it:
+
+```bash
+# One sentence in, a validated config out
+coeval wizard \
+  --objective "rank LLMs on classifying customer-support tickets into urgency levels" \
+  --models "gpt-4o-mini, claude-3-5-haiku" \
+  --items 8 \
+  --out ticket_urgency.yaml
+
+coeval run --config ticket_urgency.yaml
+```
+
+The LLM proposes the tasks, target attributes, scoring rubric, and a
+cross-family judge panel; the config is auto-validated (and auto-repaired on any
+validation error) before it is written. Omit `--objective` for the interactive,
+question-by-question wizard instead.
+
 ### Minimal experiment config (most-automatic level)
 
 You give only a task description and the models; CoEval infers the target attributes

@@ -410,9 +410,13 @@ def _try_validate(yaml_str: str) -> list[str]:
     try:
         from ..config import _parse_config, validate_config
         cfg = _parse_config(raw)
-        errors = validate_config(cfg, continue_in_place=True)
-        # Filter out folder-existence errors (no folder exists yet)
-        errors = [e for e in errors if 'does not exist' not in e and 'already exists' not in e]
+        errors = validate_config(cfg, continue_in_place=False)
+        # Filter out runtime-state errors irrelevant to a freshly generated config:
+        # the storage folder does not exist yet and no prior run/meta.json is present.
+        def _is_runtime_state(e: str) -> bool:
+            return ('does not exist' in e or 'already exists' in e
+                    or 'meta.json is missing' in e or '--continue' in e)
+        errors = [e for e in errors if not _is_runtime_state(e)]
         return errors
     except Exception as exc:
         return [f"Config parse error: {exc}"]
@@ -460,22 +464,69 @@ def cmd_wizard(args) -> None:
             # Default to openai
             gen_model = override_model
 
-    # --- Welcome ---
-    _banner('CoEval Experiment Wizard')
-    print(textwrap.fill(
-        "Welcome! This wizard will help you create a CoEval evaluation experiment "
-        "configuration using AI assistance.  Answer a few questions and the wizard "
-        "will generate a ready-to-run YAML config for you.",
-        width=70, initial_indent='  ', subsequent_indent='  ',
-    ))
-    print()
-    print(f"  Generator: {gen_provider} / {gen_model}")
-    print()
+    # --- Welcome (interactive only; non-interactive --objective stays quiet for piping) ---
+    _noninteractive = bool(getattr(args, 'objective', None))
+    if not _noninteractive:
+        _banner('CoEval Experiment Wizard')
+        print(textwrap.fill(
+            "Welcome! This wizard will help you create a CoEval evaluation experiment "
+            "configuration using AI assistance.  Answer a few questions and the wizard "
+            "will generate a ready-to-run YAML config for you.",
+            width=70, initial_indent='  ', subsequent_indent='  ',
+        ))
+        print()
+        print(f"  Generator: {gen_provider} / {gen_model}")
+        print()
 
     # --- Gather available providers ---
     available_providers = [p for p in ['openai', 'anthropic', 'gemini', 'huggingface',
                                         'bedrock', 'vertex', 'azure_openai', 'openrouter']
                            if p in keys or _provider_env_available(p)]
+
+    # --- Non-interactive: one-shot objective -> config (no questions asked) ---
+    objective = getattr(args, 'objective', None)
+    if objective:
+        description = objective.strip()
+        experiment_id = re.sub(r'[^A-Za-z0-9._-]', '-', description[:30].strip()).strip('-')
+        experiment_id = re.sub(r'-+', '-', experiment_id).strip('-') or 'coeval-experiment'
+        storage_folder = getattr(args, 'storage_folder', None) or './Runs'
+        items_per_task = getattr(args, 'items', None) or 12
+        models_hint = getattr(args, 'models', None) or ''
+        print(f"  Generating config from objective via {gen_provider}/{gen_model} ...", file=sys.stderr)
+        try:
+            yaml_str = _generate_yaml(
+                description=description, available_providers=available_providers,
+                models_hint=models_hint, items_per_task=items_per_task,
+                experiment_id=experiment_id, storage_folder=storage_folder,
+                provider=gen_provider, model_id=gen_model, api_key=gen_key,
+            )
+        except Exception as exc:
+            print(f"  ERROR: LLM call failed: {exc}", file=sys.stderr)
+            sys.exit(1)
+        # Auto-refine on validation errors, up to 2 retries, with no human in the loop.
+        for _ in range(2):
+            errors = _try_validate(yaml_str)
+            if not errors:
+                break
+            print(f"  Auto-fixing {len(errors)} validation issue(s) ...", file=sys.stderr)
+            try:
+                yaml_str = _refine_yaml(
+                    current_yaml=yaml_str,
+                    feedback="Fix exactly these validation errors and return only the YAML: "
+                             + "; ".join(errors),
+                    provider=gen_provider, model_id=gen_model, api_key=gen_key,
+                )
+            except Exception:
+                break
+        errors = _try_validate(yaml_str)
+        out_path_arg = getattr(args, 'out', None)
+        if out_path_arg:
+            Path(out_path_arg).write_text(yaml_str, encoding='utf-8')
+            status = f"{len(errors)} residual validation issue(s)" if errors else "validated OK"
+            print(f"  Wrote config to {out_path_arg} ({status})", file=sys.stderr)
+        else:
+            print(yaml_str)
+        return
 
     # --- Step 1: Describe the goal ---
     _hr()

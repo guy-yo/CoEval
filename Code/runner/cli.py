@@ -403,6 +403,26 @@ def _build_parser() -> argparse.ArgumentParser:
         '--keys', metavar='PATH', default=None,
         help='Path to a provider key file (YAML); overrides default ~/.coeval/keys.yaml',
     )
+    wizard_p.add_argument(
+        '--objective', metavar='TEXT', default=None,
+        help=(
+            'Non-interactive: a one-line high-level objective; the LLM generates and '
+            'auto-validates a full config in one shot (no questions). Writes to --out '
+            'or stdout. Example: --objective "rank LLMs on legal contract-clause classification"'
+        ),
+    )
+    wizard_p.add_argument(
+        '--items', type=int, default=None,
+        help='Non-interactive mode: items per task per teacher (default 12)',
+    )
+    wizard_p.add_argument(
+        '--models', metavar='LIST', default=None,
+        help="Non-interactive mode: preferred models, e.g. 'gpt-4o-mini, claude-3-5-haiku' (default: LLM decides)",
+    )
+    wizard_p.add_argument(
+        '--storage-folder', dest='storage_folder', metavar='PATH', default=None,
+        help='Non-interactive mode: experiment storage folder (default ./Runs)',
+    )
 
     # ---- coeval ingest ----
     ingest_p = sub.add_parser(
