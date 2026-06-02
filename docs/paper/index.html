@@ -535,7 +535,10 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   <em>vendor-independent</em>: no single provider drives it. On open-ended summarization scored against a lexical
   BERTScore reference, the cross-family ensemble ($\rho = 0.244$) tracks ground truth on par with a single GPT-4o
   <strong>G-Eval</strong> [<a href="#r2">2</a>] judge using chain-of-thought ($\rho = 0.259$, 95% CI
-  $[0.18, 0.33]$, $n=580$), matching this strong single-judge baseline without depending on any one model. The ensemble's
+  $[0.18, 0.33]$, $n=580$), matching this strong single-judge baseline without depending on any one model. One cannot
+  pick the right single judge in advance: across our tasks a single judge's correlation with the reference ranges from
+  anti-correlated ($\rho = -0.006$) to moderate ($\rho = +0.249$), a spread of $0.255$, and the best judge changes by
+  task, so the cross-family ensemble is the low-regret choice that is never anti-correlated. The ensemble's
   decisive advantage on such open-ended tasks is <em>bias-robustness</em>: individual judges carry verbosity biases of
   opposite sign that the ensemble provably cancels (Section&nbsp;5.3), paired with the contamination-resistant items
   CoEval <em>generates</em> rather than consumes; these are properties no single judge provides.
@@ -674,6 +677,16 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   aggregate in the first place, regardless of its magnitude on any individual model.
 </p>
 <p>
+  The design prevents a failure we measure directly. In the vertical case studies (Section&nbsp;5.8) the panel includes
+  <code>gpt-4o-mini</code> as both a judge and a candidate, which isolates self-preference as a
+  difference-in-differences that controls for a judge's overall harshness: on clinical reasoning the
+  <code>gpt-4o-mini</code> judge rates the <code>gpt-4o-mini</code> candidate $0.038$ higher (normalized $[0,1]$) than
+  the two cross-family judges rate it. That margin <em>flips the top rank</em>: the same-family judge alone ranks
+  <code>gpt-4o-mini</code> first, while the cross-family judges rank <code>gpt-3.5-turbo</code> first. A practitioner
+  relying on a single same-family judge is thus handed a self-serving, incorrect ranking; CoEval's vendor-disjoint
+  panel removes the effect by construction.
+</p>
+<p>
   Beyond the structural guarantee, CoEval can <em>explicitly</em> account for systematic same-family bias through
   <em>vendor-disjoint aggregation</em>: when scoring a model under test, the ensemble drops any judge that shares the
   model's vendor family, so no model contributes to its own family's score. Applying this correction to the rankings
@@ -683,10 +696,10 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   that vendor diversity, not a post-hoc adjustment, is doing the work.
 </p>
 <div class="keyfinding">
-  <strong>Property (self-preference).</strong> CoEval's vendor-disjoint panel structurally precludes a model from
-  judging its own family, closing the self-preference channel by design. Vendor-disjoint aggregation leaves every
-  ranking unchanged (per-model scores shift by at most $0.015$), confirming the cross-family rankings are already
-  robust to same-family bias.
+  <strong>Finding (self-preference).</strong> A single same-family judge inflates its own family by $0.038$
+  (difference-in-differences), enough to flip the top-ranked model; CoEval's vendor-disjoint panel structurally
+  precludes this, and vendor-disjoint aggregation leaves every cross-family ranking unchanged (scores shift
+  $\le 0.015$).
 </div>
 
 <h3>5.5 Rubric generalization</h3>
@@ -723,10 +736,21 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   applies to CoEval's generated items; the benchmark-grounded anchor of Table&nbsp;1 deliberately reuses public items to
   obtain objective ground truth.)
 </p>
+<p>
+  Non-duplication shows the items are fresh; a controlled study shows why that matters. We fine-tune a small open model
+  (Qwen2.5-0.5B) to memorize $200$ public SciQ items, turning that public set into a contaminated benchmark, and compare
+  it against a clean frontier model (<code>gpt-4o-mini</code>) on both the memorized set and $100$ fresh held-out items
+  of the same capability. On the contaminated benchmark the memorizer scores a perfect $1.00$ and is ranked
+  <em>above</em> <code>gpt-4o-mini</code> ($0.845$); on the fresh items the order is correct, with
+  <code>gpt-4o-mini</code> ($0.81$) above the memorizer ($0.74$, its true capability). A static, possibly-contaminated
+  leaderboard thus ranks a $0.5$B memorizer ahead of a frontier model, an inversion that CoEval's freshly-generated
+  items remove because no candidate can have trained on items synthesized after the fact.
+</p>
 <div class="keyfinding">
-  <strong>Finding (contamination).</strong> CoEval-generated items show $0.0000$ verbatim 13-gram overlap with five
-  major public benchmarks ($n=400$ vs $491$ items; $110{,}784$ distinct public 13-grams), corroborating, alongside
-  the structural freshness guarantee, that generated evaluation items are not leaked copies of public test sets.
+  <strong>Finding (contamination).</strong> A static benchmark of memorized public items ranks a $0.5$B memorizer
+  <em>above</em> <code>gpt-4o-mini</code> ($1.00$ vs $0.845$); on fresh items of the same capability the order inverts to
+  the correct one (<code>gpt-4o-mini</code> $0.81 >$ memorizer $0.74$). CoEval-generated items additionally show
+  $0.0000$ verbatim 13-gram overlap with five major public benchmarks, so they cannot be gamed this way.
 </div>
 
 <h3>5.7 Cost</h3>
@@ -821,9 +845,9 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   exact-match QA, where labels exist; on subjective custom domains (Section&nbsp;5.8) we rely on the cross-family
   ensemble and report intervals rather than a held-out gold ranking, because by assumption none exists. We study three
   candidate models across four tasks, an exact-match QA validation, and three custom verticals; broader model pools and additional domains would further
-  test generality. Self-preference (Section&nbsp;5.4) is handled as a structural design property rather than a measured
-  magnitude. And the contamination guarantee is structural (fresh per-run synthesis) with n-gram
-  non-duplication as corroboration, not a membership test against any model's full pretraining corpus.
+  test generality. The contamination guarantee is structural (fresh per-run synthesis), validated both by zero verbatim
+  overlap and by a controlled memorization study (Section&nbsp;5.6); a verbatim n-gram test is not a membership test
+  against any model's full pretraining corpus.
 </p>
 <!-- ===================== 7. CONCLUSION ===================== -->
 <h2>7. Conclusion</h2>
