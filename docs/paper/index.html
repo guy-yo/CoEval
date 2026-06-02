@@ -357,6 +357,20 @@
   constraint</em> that cancels same-family preference at the aggregation level, and pairs it with
   contamination-free item generation, so both items and judges are bias-hardened rather than only the scoring step.
 </p>
+<p>
+  A parallel and very recent line of work makes judge aggregation itself <em>label-free and reliability-aware</em>.
+  Judge-aware jury methods learn a per-judge reliability parameter jointly with the model ranking from pairwise
+  comparisons (the judge-discriminator Bradley&ndash;Terry model of [<a href="#r27">27</a>] and the judge-aware ranking
+  framework of [<a href="#r29">29</a>]), and confounder-aware aggregation [<a href="#r28">28</a>] separates true
+  quality from shared judge confounders without ground-truth labels. CoEval's unsupervised reliability-weighted
+  aggregator (Section&nbsp;5.2) shares this label-free goal, and our contribution is not the aggregator in isolation but
+  its <em>integration</em> with the rest of the loop: these methods assume a fixed, externally supplied item set, scored
+  as pairwise comparisons by a single-vendor judge pool, whereas CoEval supplies the items themselves (generated de novo
+  and contamination-free) and scores them as rubric-anchored absolute scores from a <em>vendor-disjoint</em> panel, so
+  the item supply and the judge pool are both bias-hardened rather than only the aggregation step. Owning the whole loop
+  is what surfaces the <em>judge-choice regret</em> of Section&nbsp;5.2: a single judge can be anti-correlated with
+  ground truth where the cross-family ensemble is the low-regret choice.
+</p>
 
 <h3>2.2 Automated and contamination-resistant benchmark generation</h3>
 <p>
@@ -372,8 +386,14 @@
   [<a href="#r22">22</a>] and LiveCodeBench [<a href="#r23">23</a>] limit leakage by continuously
   releasing fresh, time-windowed items, but rely on human-curated questions with objective answers and avoid LLM judges;
   CoEval extends contamination resistance to <em>open-ended, judge-scored</em> tasks by generating fresh,
-  attribute-controlled items on demand. Dynabench [<a href="#r14">14</a>] proposed dynamic, human-in-the-loop
-  renewal; CoEval automates renewal without humans. Constructing domain-specific evaluation sets for LLM judges
+  attribute-controlled items on demand. Two recent generators are closest to our item-synthesis step: CHASE
+  [<a href="#r30">30</a>] composes challenging problems bottom-up from verifiable sub-tasks with no human involvement,
+  and DataMorgana [<a href="#r31">31</a>] produces configuration-driven synthetic question&ndash;answer sets with
+  controllable category distributions, close to our attribute-stratified sampling. Both stop at item generation; CoEval
+  differs by closing the loop to a model <em>ranking</em>, adding the vendor-disjoint judge panel and label-free
+  aggregation that turn fresh items into a defensible leaderboard. A recent survey of the move from static to dynamic
+  contamination-resistant benchmarks [<a href="#r32">32</a>] situates this shift. Dynabench [<a href="#r14">14</a>]
+  proposed dynamic, human-in-the-loop renewal; CoEval automates renewal without humans. Constructing domain-specific evaluation sets for LLM judges
   [<a href="#r25">25</a>] targets verticals such as medicine and law; CoEval generates such domain-targeted
   items automatically within the same pipeline. Length-Controlled AlpacaEval [<a href="#r8">8</a>] debiases for
   verbosity post hoc on a single judge; CoEval instead cancels verbosity bias through panel diversity (Section&nbsp;5.3).
@@ -445,27 +465,11 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
 
 <h3>3.4 Reliability and bias metrics</h3>
 <p>
-  CoEval reports the agreement of the judge panel using intraclass correlation. For an average-measures design over $k$
-  judges, the ICC(3,k) reliability is
-</p>
-$$\mathrm{ICC}(3,k) \;=\; \frac{MSR - MSE}{MSR},$$
-<p>
-  where $MSR$ is the between-targets (rows) mean square and $MSE$ the residual mean square. The gain from aggregating
-  more judges follows the <strong>Spearman&ndash;Brown</strong> prophecy relation: if $\bar{r}$ is the mean pairwise
-  inter-judge correlation, the reliability of a $k$-judge mean is
-</p>
-$$R_k \;=\; \frac{k\,\bar{r}}{1 + (k-1)\,\bar{r}}.$$
-<p>
-  For categorical agreement (e.g., pass/fail rubric criteria) CoEval reports Cohen's $\kappa$,
-</p>
-$$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
-<p>
-  where $p_o$ is observed agreement and $p_e$ the agreement expected by chance. To quantify residual bias and its
-  uncertainty, CoEval computes the Pearson correlation between a candidate confound (e.g., response length) and the
-  assigned score, with a <strong>nonparametric bootstrap</strong> confidence interval: the per-item (length, score)
-  pairs are resampled with replacement $B$ times, the correlation is recomputed on each resample, and the
-  $2.5$th&ndash;$97.5$th percentiles of the bootstrap distribution form the reported 95% CI. A CI that includes zero
-  indicates that the corresponding bias is statistically indistinguishable from absent.
+  CoEval reports panel agreement with the average-measures intraclass correlation $\mathrm{ICC}(3,k)$ and the
+  <strong>Spearman&ndash;Brown</strong> prophecy relation that governs how reliability grows with panel size,
+  categorical rubric agreement with Cohen's $\kappa$, and residual bias with a Pearson confound&ndash;score correlation
+  carrying a nonparametric bootstrap 95% confidence interval (a CI that includes zero indicates a bias indistinguishable
+  from absent). The exact estimator definitions are collected in <a href="#appA">Appendix&nbsp;A</a>.
 </p>
 
 <!-- ===================== 4. EXPERIMENTAL SETUP ===================== -->
@@ -607,7 +611,7 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   inter-rater reliability $\mathrm{ICC}(3,k)$ as judges are added in descending order of agreement (Figure&nbsp;3).
   Reliability is <strong>non-monotone</strong>: a selected two-judge panel reaches $\mathrm{ICC}(3,k) = 0.70$, but
   appending lower-agreement judges <em>lowers</em> it to $0.45$ and then $0.40$. This is the Spearman&ndash;Brown
-  relation of Section&nbsp;3.4 operating in reverse: an added judge with low mean correlation $\bar{r}$ to the panel
+  relation (<a href="#appA">Appendix&nbsp;A</a>) operating in reverse: an added judge with low mean correlation $\bar{r}$ to the panel
   reduces $\bar{r}$ faster than the $k$-fold averaging can compensate, so the aggregate reliability $R_k$ falls. The
   effect is exact: our measured ICC matches the Spearman&ndash;Brown prediction to three decimals. Naively enlarging
   a panel can therefore <em>degrade</em> it; what matters is retaining high-agreement judges.
@@ -975,7 +979,50 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
     LLM-as-a-judge.</em> <a href="https://arxiv.org/abs/2408.08808">arxiv.org/abs/2408.08808</a></li>
   <li id="r26">Li, Y., et al. (2025). <em>Leveraging LLMs as Meta-Judges: A Multi-Agent Framework.</em>
     <a href="https://arxiv.org/abs/2504.17087">arxiv.org/abs/2504.17087</a></li>
+  <li id="r27">Qian, C., Sun, G., Gales, M., Knill, K. (2026). <em>Who can we trust? LLM-as-a-jury for Comparative
+    Assessment.</em> ICML. <a href="https://arxiv.org/abs/2602.16610">arxiv.org/abs/2602.16610</a></li>
+  <li id="r28">Zhao, Y., Shin, J., Huang, Z., Namburi, S., Sala, F. (2026). <em>CARE: Confounder-Aware Aggregation
+    for Reliable LLM Evaluation.</em> <a href="https://arxiv.org/abs/2603.00039">arxiv.org/abs/2603.00039</a></li>
+  <li id="r29">Xu, C., Tan, Z., Wu, J., Zhou, T. (2026). <em>A Judge-Aware Ranking Framework for Evaluating Large
+    Language Models without Ground Truth.</em> <a href="https://arxiv.org/abs/2601.21817">arxiv.org/abs/2601.21817</a></li>
+  <li id="r30">Patel, A., Reddy, S., Bahdanau, D. (2025). <em>CHASE: How to Get Your LLM to Generate Challenging
+    Problems for Evaluation.</em> <a href="https://arxiv.org/abs/2502.14678">arxiv.org/abs/2502.14678</a></li>
+  <li id="r31">Filice, S., Horowitz, G., Carmel, D., Karnin, Z., Lewin-Eytan, L., Maarek, Y. (2025). <em>Generating
+    Diverse Q&amp;A Benchmarks for RAG Evaluation with DataMorgana.</em> SIGIR LiveRAG.
+    <a href="https://arxiv.org/abs/2501.12789">arxiv.org/abs/2501.12789</a></li>
+  <li id="r32">Chen, Y., et al. (2025). <em>Recent Advances in Large Language Model Benchmarks against Data
+    Contamination: From Static to Dynamic Evaluation.</em> EMNLP.
+    <a href="https://arxiv.org/abs/2502.17521">arxiv.org/abs/2502.17521</a></li>
 </ol>
+
+<!-- ===================== APPENDIX ===================== -->
+<h2 id="appA">Appendix A. Statistical methods</h2>
+<p>
+  This appendix collects the estimator definitions used in the main text. CoEval reports the agreement of the judge
+  panel using intraclass correlation. For an average-measures design over $k$ judges, the ICC(3,k) reliability is
+</p>
+$$\mathrm{ICC}(3,k) \;=\; \frac{MSR - MSE}{MSR},$$
+<p>
+  where $MSR$ is the between-targets (rows) mean square and $MSE$ the residual mean square. The gain from aggregating
+  more judges follows the <strong>Spearman&ndash;Brown</strong> prophecy relation: if $\bar{r}$ is the mean pairwise
+  inter-judge correlation, the reliability of a $k$-judge mean is
+</p>
+$$R_k \;=\; \frac{k\,\bar{r}}{1 + (k-1)\,\bar{r}}.$$
+<p>
+  For categorical agreement (e.g., pass/fail rubric criteria) CoEval reports Cohen's $\kappa$,
+</p>
+$$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
+<p>
+  where $p_o$ is observed agreement and $p_e$ the agreement expected by chance. To quantify residual bias and its
+  uncertainty, CoEval computes the Pearson correlation between a candidate confound (e.g., response length) and the
+  assigned score, with a <strong>nonparametric bootstrap</strong> confidence interval: the per-item (length, score)
+  pairs are resampled with replacement $B$ times, the correlation is recomputed on each resample, and the
+  $2.5$th&ndash;$97.5$th percentiles of the bootstrap distribution form the reported 95% CI. A CI that includes zero
+  indicates that the corresponding bias is statistically indistinguishable from absent. Across the family of correlation
+  tests reported in Section&nbsp;5 we control the false-discovery rate with the Benjamini&ndash;Hochberg procedure
+  ($\alpha = 0.05$), and confidence intervals use a <em>datapoint-clustered</em> resample wherever observations are
+  nested (multiple student responses per item).
+</p>
 
 </div>
 </body>

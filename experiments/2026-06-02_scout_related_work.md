@@ -49,3 +49,22 @@ option and run the bake-off (below) to position against them.
 ## Caveats from the scout
 PiCO id (2402.01830) inferred, not opened. Several 2026 ids unverified. Vendor-blog
 hits (futureagi) non-citable. bibtest is mandatory on every new entry.
+
+## Scout round 2 (2026-06-02) — competitors + positioning (bibtest-verified, INTEGRATED)
+Added to the paper (all bibtest VALID): label-free judge-aggregation competitors
+BT-σ (2602.16610), CARE (2603.00039), Xu et al. judge-aware ranking (2601.21817);
+de-novo generators CHASE (2502.14678), DataMorgana (2501.12789); contamination
+survey (2502.17521, EMNLP 2025). New §2.1 paragraph + §2.2 additions; refs r27-r32.
+
+KEY POSITIONING (now in §2.1): contribution #3 (label-free reliability-weighted
+aggregation) is NO LONGER novel in isolation (BT-σ/CARE/Xu all do unsupervised
+judge-reliability aggregation). Reframed as INTEGRATION: those methods assume a
+fixed externally-supplied item set scored as pairwise comparisons by a single-vendor
+pool; CoEval supplies the items (de-novo, contamination-free) and scores rubric-anchored
+absolute scores from a vendor-disjoint panel. Owning the whole loop is what surfaces the
+judge-choice-regret phenomenon and the contamination ranking-flip.
+
+UNVERIFIED candidates held back (need bibtest if ever used): 2605.09702, 2601.22336,
+2601.22548, 2512.16041, 2602.10367, 2605.19999, 2603.00077, 2603.20882, 2605.23454.
+Self-preference-is-justified papers (2504.03846 already cited as r24; 2506.02592,
+2601.22548 NICE-TO-HAVE) could pre-empt the "your fix removes signal" objection.
