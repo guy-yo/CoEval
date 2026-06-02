@@ -4,13 +4,14 @@
   "spearman_vs_bertscore": 0.2589,
   "lo": 0.1786,
   "hi": 0.3339,
-  "coeval_ensemble_vs_bertscore": 0.244,
-  "coeval_best_single_judge": 0.354,
+  "coeval_ensemble_vs_bertscore": 0.227,
+  "coeval_best_single_judge": 0.249,
   "score_dist": {
     "1": 8,
     "2": 26,
     "3": 179,
     "4": 157,
     "5": 210
-  }
+  },
+  "basis": "summarization (BERTScore) responses; CoEval numbers recomputed on the same task as G-Eval"
 }

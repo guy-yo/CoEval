@@ -1,0 +1,37 @@
+{
+  "experiment": "v2_aggregation_bakeoff",
+  "task": "benchmark-grounded (3 tasks: code BLEU + news/text BERTScore), pooled, via analyzer.benchmark_correlation",
+  "n_responses": 900,
+  "judges": [
+    "claude-haiku",
+    "gemini-flash",
+    "gpt-3.5-turbo",
+    "gpt-4o-mini"
+  ],
+  "single_judge_rho": {
+    "claude-haiku": 0.3084,
+    "gemini-flash": 0.1669,
+    "gpt-3.5-turbo": -0.0418,
+    "gpt-4o-mini": 0.239
+  },
+  "best_single": {
+    "claude-haiku": 0.3084
+  },
+  "worst_single": {
+    "gpt-3.5-turbo": -0.0418
+  },
+  "judge_choice_regret_range": 0.3502,
+  "reliability_weights": {
+    "claude-haiku": 0.266,
+    "gemini-flash": 0.287,
+    "gpt-3.5-turbo": 0.181,
+    "gpt-4o-mini": 0.266
+  },
+  "aggregations": {
+    "mean (Sec 5.1 ensemble)": 0.2376,
+    "median": 0.2219,
+    "trimmed_mean": 0.2219,
+    "reliability_weighted": 0.2458,
+    "dawid_skene": 0.1781
+  }
+}

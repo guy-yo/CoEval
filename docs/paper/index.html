@@ -431,9 +431,12 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   individual judge biases have mixed sign across the panel, as we observe empirically for verbosity
   (Section&nbsp;5.3), the averaging in $\bar{s}_i$ cancels them. This is the mechanism behind our central claim
   that <em>composition</em>, not panel size, drives reliability: a large same-family panel amplifies a shared bias,
-  whereas a small cross-family panel cancels it. The implemented aggregator is the unweighted mean above; "composition"
-  is enforced by judge <em>selection</em> (which judges enter $J$; Section&nbsp;5.2), not by a weighting term, so the
-  scorer stays simple and auditable.
+  whereas a small cross-family panel cancels it. The default aggregator is the unweighted mean above, with "composition"
+  enforced by judge <em>selection</em> (which judges enter $J$; Section&nbsp;5.2), so the scorer stays simple and
+  auditable. CoEval additionally offers an <em>unsupervised reliability-weighted</em> aggregator that requires no ground
+  truth: it weights each judge by its mean agreement with the panel consensus, $w_j \propto \bar{r}_j$ with
+  $\sum_j w_j = 1$, so a judge that disagrees with the rest of the panel is automatically down-weighted. We evaluate both
+  aggregators in Section&nbsp;5.2.
 </p>
 
 <h3>3.4 Reliability and bias metrics</h3>
@@ -485,7 +488,7 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   <thead><tr><th class="lbl">Experiment</th><th>Task(s)</th><th>Judge panel</th><th>Size</th></tr></thead>
   <tbody>
     <tr><td class="lbl">5.1 ground truth</td><td>SciQ, ARC (exact-match QA)</td><td>gpt-4o, claude-sonnet-4, gemini-2.5-flash</td><td>191 items / 573 resp.</td></tr>
-    <tr><td class="lbl">5.1 summarization</td><td>summarization (vs BERTScore)</td><td>gpt-4o-mini, gpt-3.5-turbo, qwen2.5-1.5b, smollm2-1.7b</td><td>580 resp.</td></tr>
+    <tr><td class="lbl">5.1&ndash;5.2 benchmark-grounded</td><td>code (BLEU), news + text summ. (BERTScore)</td><td>gpt-4o-mini, gpt-3.5-turbo, claude-haiku, gemini-flash</td><td>3 tasks / 900 resp.</td></tr>
     <tr><td class="lbl">5.2&ndash;5.3, 5.5</td><td>4-task medium study</td><td>gpt-4o-mini, gpt-3.5-turbo, qwen2.5-1.5b, smollm2-1.7b</td><td>7,978 eval.</td></tr>
     <tr><td class="lbl">5.4, 5.8 verticals</td><td>drug-interaction, clinical, legal</td><td>claude-haiku, gemini-flash, gpt-4o-mini</td><td>40 items each</td></tr>
     <tr><td class="lbl">5.6 contamination</td><td>SciQ memorization</td><td>exact-match (no LLM judge)</td><td>200 memorized / 100 fresh</td></tr>
@@ -551,12 +554,13 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   Because correctness is objective, the three frontier judges converge on identical labels, so the ensemble matches its
   strongest member: the experiment establishes that CoEval judges are <em>accurate</em> and that the result is
   <em>vendor-independent</em>: no single provider drives it. On open-ended summarization scored against a lexical
-  BERTScore reference, the cross-family ensemble ($\rho = 0.244$) tracks ground truth on par with a single GPT-4o
+  BERTScore reference, the cross-family ensemble ($\rho = 0.227$) tracks ground truth on par with a single GPT-4o
   <strong>G-Eval</strong> [<a href="#r2">2</a>] judge using chain-of-thought ($\rho = 0.259$, 95% CI
   $[0.18, 0.33]$, $n=580$), matching this strong single-judge baseline without depending on any one model. A single judge
-  is a gamble one cannot hedge in advance: across the panel, correlation with this lexical reference ranges from
-  anti-correlated ($\rho = -0.04$) to $+0.35$, and which judge is best changes by task, so no fixed single-judge choice
-  is safe a priori. The cross-family ensemble ($\rho = 0.244$) is the low-regret alternative: it is never
+  is a gamble one cannot hedge in advance: on this task the panel's individual judges range from anti-correlated
+  (<code>gpt-3.5-turbo</code>, $\rho = -0.01$) to $\rho = 0.25$, and which judge is best changes by task, so no fixed
+  single-judge choice is safe a priori (Section&nbsp;5.2 quantifies this judge-choice regret across the full
+  benchmark-grounded set). The cross-family ensemble is the low-regret alternative: it is never
   anti-correlated and needs no judge-selection oracle. The ensemble's
   decisive advantage on such open-ended tasks is <em>bias-robustness</em>: individual judges carry verbosity biases of
   opposite sign that the ensemble provably cancels (Section&nbsp;5.3), paired with the contamination-resistant items
@@ -593,7 +597,7 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
 </table>
 </div>
 
-<h3>5.2 Ensemble reliability</h3>
+<h3>5.2 Ensemble reliability and judge-choice regret</h3>
 <p>
   The reliability of a judge ensemble is governed by its <em>composition</em>, not its size. We measure average-measures
   inter-rater reliability $\mathrm{ICC}(3,k)$ as judges are added in descending order of agreement (Figure&nbsp;3).
@@ -630,6 +634,34 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   $\mathrm{ICC}(3,k)$ peaks at $0.70$ for a selected strong pair and <em>falls</em> to $0.40$ as low-agreement judges
   are added, matching the Spearman&ndash;Brown prediction exactly. Ensemble <em>composition</em>, not size, is the
   decisive reliability lever; CoEval's consensus selection retains the high-agreement judges automatically.
+</div>
+<p>
+  Composition matters because the <em>wrong single judge can be worse than useless</em>, and which judge is wrong is not
+  knowable a priori without the labels CoEval assumes are absent. Across the benchmark-grounded set of Section&nbsp;5.1
+  (three tasks, $n = 900$ pooled), the four candidate judges span a correlation range from $-0.04$
+  (<code>gpt-3.5-turbo</code>, anti-correlated) through $0.17$ (<code>gemini-flash</code>) and $0.24$
+  (<code>gpt-4o-mini</code>) to $0.31$ (<code>claude-haiku</code>): a <strong>judge-choice regret of $0.35$</strong>
+  between the best and worst single judge. The best judge is moreover task-dependent (<code>claude-haiku</code> here,
+  <code>gpt-4o-mini</code> on the summarization subset of Section&nbsp;5.1), so a practitioner committing to one judge in
+  advance risks the anti-correlated one. The cross-family ensemble is the low-regret default: its plain mean correlates
+  at $0.238$ and, unlike a single pick, is <em>never</em> anti-correlated.
+</p>
+<p>
+  Given the panel, the choice of aggregator is itself a lever, and the unsupervised reliability-weighted aggregator of
+  Section&nbsp;3.3 is the best label-free option we test. Weighting each judge by its agreement with the rest of the
+  panel assigns the anti-correlated <code>gpt-3.5-turbo</code> the lowest weight ($0.18$ versus $0.27$&ndash;$0.29$ for
+  the others) and lifts the aggregate correlation from the plain mean's $0.238$ to <strong>$0.246$</strong>. The
+  alternatives are worse: median and trimmed-mean aggregation, which discard rather than re-weight information, reach
+  only $0.222$, and a Dawid&ndash;Skene latent-truth model over discretized scores reaches $0.178$. Reliability weighting
+  thus turns the panel's own internal agreement, the one signal available without labels, into the strongest aggregate,
+  while never selecting the anti-correlated judge.
+</p>
+<div class="keyfinding">
+  <strong>Finding (judge-choice regret).</strong> Choosing a single judge without labels is unsafe: on the
+  benchmark-grounded set the candidate judges range from $-0.04$ (anti-correlated) to $0.31$, a judge-choice regret of
+  $0.35$, and the best judge varies by task. The cross-family ensemble removes this risk (plain mean $0.238$, never
+  anti-correlated), and among label-free aggregators reliability weighting is the strongest ($0.246$, versus $0.222$ for
+  median/trimmed and $0.178$ for Dawid&ndash;Skene), using only the panel's internal agreement.
 </div>
 
 <h3>5.3 Bias cancellation</h3>

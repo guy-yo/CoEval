@@ -1,5 +1,6 @@
 {
-  "experiment": "EXP-001 benchmark-grounded correlation",
+  "experiment": "benchmark-grounded correlation",
+  "aspect_filter": null,
   "run": "Runs\\EXP001-benchmark-grounded-comparison",
   "tasks": [
     "code_explanation",
@@ -22,9 +23,9 @@
     "method": "CoEval ensemble",
     "n_judges": 4,
     "code_explanation": {
-      "rho": -0.030878074153157287,
-      "lo": -0.15960542908442488,
-      "hi": 0.08893789854512141,
+      "rho": -0.04397544262799531,
+      "lo": -0.17291608698448446,
+      "hi": 0.07490782043113449,
       "n": 300
     },
     "news_summarization": {
@@ -40,9 +41,9 @@
       "n": 300
     },
     "overall": {
-      "rho": 0.24426383776495955,
-      "lo": 0.17942763233156275,
-      "hi": 0.3109686287221392,
+      "rho": 0.23763558826777978,
+      "lo": 0.17382439040956046,
+      "hi": 0.3022339809123119,
       "n": 900
     }
   },
@@ -50,10 +51,10 @@
     "claude-haiku": {
       "method": "single judge: claude-haiku",
       "code_explanation": {
-        "rho": -0.03099376707603881,
-        "lo": -0.18996248331188295,
-        "hi": 0.11701531161196065,
-        "n": 189
+        "rho": -0.06108737122690124,
+        "lo": -0.18680967807819668,
+        "hi": 0.05325802033527583,
+        "n": 300
       },
       "news_summarization": {
         "rho": 0.19039581417083432,
@@ -68,10 +69,10 @@
         "n": 300
       },
       "overall": {
-        "rho": 0.3540945170251086,
-        "lo": 0.2917637469837532,
-        "hi": 0.4160706165671745,
-        "n": 789
+        "rho": 0.30842637479504204,
+        "lo": 0.24743982212639853,
+        "hi": 0.3695749272496243,
+        "n": 900
       }
     },
     "gemini-flash": {
@@ -181,10 +182,31 @@
     },
     "overall": {
       "judge": "claude-haiku",
-      "rho": 0.3540945170251086,
-      "lo": 0.2917637469837532,
-      "hi": 0.4160706165671745,
-      "n": 789
+      "rho": 0.30842637479504204,
+      "lo": 0.24743982212639853,
+      "hi": 0.3695749272496243,
+      "n": 900
+    }
+  },
+  "mean_single_judge": {
+    "method": "Mean single judge",
+    "judges": [
+      "claude-haiku",
+      "gemini-flash",
+      "gpt-3.5-turbo",
+      "gpt-4o-mini"
+    ],
+    "code_explanation": {
+      "rho": -0.05250173008713206
+    },
+    "news_summarization": {
+      "rho": 0.11701351819995794
+    },
+    "text_summarization": {
+      "rho": 0.05924694908201209
+    },
+    "overall": {
+      "rho": 0.1681463734487999
     }
   }
 }

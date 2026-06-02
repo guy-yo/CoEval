@@ -105,7 +105,7 @@ def main():
     e = correlation_ci(g, bs, method="spearman", seed=0)
     out = {"baseline": "G-Eval (gpt-4o CoT, single judge)", "n": len(common),
            "spearman_vs_bertscore": round(e.point, 4), "lo": round(e.lo, 4), "hi": round(e.hi, 4),
-           "coeval_ensemble_vs_bertscore": 0.244, "coeval_best_single_judge": 0.354,
+           "coeval_ensemble_vs_bertscore": 0.227, "coeval_best_single_judge": 0.249,
            "score_dist": {int(k): g.count(k) for k in sorted(set(g))}}
     (RUN / "reports" / "geval_baseline.json").write_text(json.dumps(out, indent=2))
     print(json.dumps(out, indent=2))
