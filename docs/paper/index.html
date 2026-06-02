@@ -357,6 +357,10 @@
   contamination-free item generation, so both items and judges are bias-hardened rather than only the scoring step.
 </p>
 <p>
+  The idea that a rater's reliability can be inferred from inter-rater agreement, with no ground truth, dates back to
+  <em>Dawid and Skene</em> [<a href="#r33">33</a>], whose EM algorithm estimates latent labels and per-rater error rates
+  jointly; CoEval applies the same principle to a vendor-disjoint LLM panel, where peer agreement both down-weights and
+  diagnoses unreliable judges (Section&nbsp;5.2).
   A parallel and very recent line of work makes judge aggregation itself <em>label-free and reliability-aware</em>.
   Judge-aware jury methods learn a per-judge reliability parameter jointly with the model ranking from pairwise
   comparisons (the judge-discriminator Bradley&ndash;Terry model of [<a href="#r27">27</a>] and the judge-aware ranking
@@ -663,7 +667,8 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   panel assigns the anti-correlated <code>gpt-3.5-turbo</code> the lowest weight ($0.18$ versus $0.27$&ndash;$0.29$ for
   the others) and lifts the aggregate correlation from the plain mean's $0.238$ to <strong>$0.246$</strong>. The
   alternatives are worse: median and trimmed-mean aggregation, which discard rather than re-weight information, reach
-  only $0.222$, and a Dawid&ndash;Skene latent-truth model over discretized scores reaches $0.178$. Reliability weighting
+  only $0.222$, and a Dawid&ndash;Skene latent-truth model [<a href="#r33">33</a>] over discretized scores reaches
+  $0.178$. Reliability weighting
   thus turns the panel's own internal agreement, the one signal available without labels, into the strongest aggregate,
   while never selecting the anti-correlated judge.
 </p>
@@ -1031,6 +1036,9 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   <li id="r32">Chen, Y., et al. (2025). <em>Recent Advances in Large Language Model Benchmarks against Data
     Contamination: From Static to Dynamic Evaluation.</em> EMNLP.
     <a href="https://arxiv.org/abs/2502.17521">arxiv.org/abs/2502.17521</a></li>
+  <li id="r33">Dawid, A. P., Skene, A. M. (1979). <em>Maximum Likelihood Estimation of Observer Error-Rates Using
+    the EM Algorithm.</em> Journal of the Royal Statistical Society: Series C (Applied Statistics), 28(1), 20&ndash;28.
+    <a href="https://doi.org/10.2307/2346806">doi.org/10.2307/2346806</a></li>
 </ol>
 
 <!-- ===================== APPENDIX ===================== -->
