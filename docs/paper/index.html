@@ -181,15 +181,19 @@
   .gallery { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2em; margin: 1.4em 0; }
   .gallery figure { margin: 0; }
   .gallery figcaption { text-align: center; }
-  .docxlink { position: fixed; top: 12px; right: 16px; z-index: 100; background: #1f2a44;
+  .docxlinks { position: fixed; top: 12px; right: 16px; z-index: 100; display: flex; gap: 7px; }
+  .docxlink { background: #1f2a44;
     color: #fff; padding: 7px 13px; border-radius: 6px; font-family: -apple-system, Segoe UI, Arial, sans-serif;
     font-size: 13px; text-decoration: none; box-shadow: 0 1px 5px rgba(0,0,0,.25); }
   .docxlink:hover { background: #2b6cb0; text-decoration: none; }
-  @media print { .docxlink { display: none; } }
+  @media print { .docxlinks { display: none; } }
 </style>
 </head>
 <body>
-<a class="docxlink" href="CoEval.docx" download title="Download this paper as a Word document">&#8595; Word (.docx)</a>
+<div class="docxlinks">
+  <a class="docxlink" href="CoEval.docx" download title="Download the single-column Word version">&#8595; Word (1-col)</a>
+  <a class="docxlink" href="CoEval_twocolumn.docx" download title="Download the two-column (arXiv-style) Word version">&#8595; Word (2-col)</a>
+</div>
 <div class="wrap">
 
 <header class="titleblock">
