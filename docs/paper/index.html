@@ -497,9 +497,9 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   <tbody>
     <tr><td class="lbl">5.1 ground truth</td><td>SciQ, ARC (exact-match QA)</td><td>gpt-4o, claude-sonnet-4, gemini-2.5-flash</td><td>191 items / 573 resp.</td></tr>
     <tr><td class="lbl">5.1&ndash;5.2 benchmark-grounded</td><td>code (BLEU), news + text summ. (BERTScore)</td><td>gpt-4o-mini, gpt-3.5-turbo, claude-haiku, gemini-flash</td><td>3 tasks / 900 resp.</td></tr>
-    <tr><td class="lbl">5.2&ndash;5.3, 5.5</td><td>4-task medium study</td><td>gpt-4o-mini, gpt-3.5-turbo, qwen2.5-1.5b, smollm2-1.7b</td><td>7,978 eval.</td></tr>
-    <tr><td class="lbl">5.4, 5.8 verticals</td><td>drug-interaction, clinical, legal</td><td>claude-haiku, gemini-flash, gpt-4o-mini</td><td>40 items each</td></tr>
-    <tr><td class="lbl">5.6 contamination</td><td>SciQ memorization</td><td>exact-match (no LLM judge)</td><td>200 memorized / 100 fresh</td></tr>
+    <tr><td class="lbl">5.2&ndash;5.3, App. B</td><td>4-task medium study</td><td>gpt-4o-mini, gpt-3.5-turbo, qwen2.5-1.5b, smollm2-1.7b</td><td>7,978 eval.</td></tr>
+    <tr><td class="lbl">5.4, 5.7 verticals</td><td>drug-interaction, clinical, legal</td><td>claude-haiku, gemini-flash, gpt-4o-mini</td><td>40 items each</td></tr>
+    <tr><td class="lbl">5.5 contamination</td><td>SciQ memorization</td><td>exact-match (no LLM judge)</td><td>200 memorized / 100 fresh</td></tr>
   </tbody>
 </table>
 </div>
@@ -510,11 +510,12 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   Our experiments answer one question: <em>does CoEval reliably rank models for a use case when one cannot use a
   standard benchmark?</em> We organize the evidence accordingly. Section&nbsp;5.1 establishes that CoEval's label-free
   scores are <em>trustworthy</em>: they track objective ground truth ($\rho = 0.86$) and reproduce the true model
-  ranking (Table&nbsp;3), benchmarked against a single-judge G-Eval baseline. Sections&nbsp;5.2&ndash;5.5 explain
+  ranking (Table&nbsp;3), benchmarked against a single-judge G-Eval baseline. Sections&nbsp;5.2&ndash;5.4 explain
   <em>why</em> the judging is reliable with no human calibration: a cross-family ensemble whose composition (not size)
-  governs reliability (5.2), which cancels the verbosity bias every single judge carries (5.3), structurally avoids
-  self-preference (5.4), and produces task-appropriate rubrics (5.5). Section&nbsp;5.6 verifies the second condition
-  directly, that the generated items are <em>contamination-free</em>, and Section&nbsp;5.7 shows the process is cheap enough to re-run per use case. Section&nbsp;5.8 exercises the complete tool on three custom verticals (drug interaction, clinical, legal) with no labeled data.
+  governs reliability (5.2), which cancels the verbosity bias every single judge carries (5.3) and structurally avoids
+  self-preference (5.4); the auto-generated rubrics are themselves task-specialized with a shared quality core
+  (<a href="#appB">Appendix&nbsp;B</a>). Section&nbsp;5.5 verifies the second condition
+  directly, that the generated items are <em>contamination-free</em>, and Section&nbsp;5.5 shows the process is cheap enough to re-run per use case. Section&nbsp;5.7 exercises the complete tool on three custom verticals (drug interaction, clinical, legal) with no labeled data.
 </p>
 
 <h3>5.1 Ground-truth correlation</h3>
@@ -736,7 +737,7 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   aggregate in the first place, regardless of its magnitude on any individual model.
 </p>
 <p>
-  We also measure the residual same-family preference directly. The vertical case studies (Section&nbsp;5.8) include
+  We also measure the residual same-family preference directly. The vertical case studies (Section&nbsp;5.7) include
   <code>gpt-4o-mini</code> as both a judge and a candidate, which lets us isolate self-preference as a
   difference-in-differences that controls for a judge's overall harshness (how much more the same-family judge favors the
   in-family candidate over a rival than the cross-family judges do). Across the three verticals the residual effect is
@@ -761,27 +762,7 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   $\le 0.015$): the cross-family design neutralizes self-preference by construction.
 </div>
 
-<h3>5.5 Rubric generalization</h3>
-<p>
-  CoEval generates a scoring rubric automatically per task. We examine whether these rubrics are appropriately
-  task-specialized while sharing a common quality core. Across the four tasks, the 22 auto-generated rubric criteria
-  exhibit a mean <em>within-task</em> semantic similarity of $0.342$, exceeding the mean <em>cross-task</em> similarity
-  of $0.294$: criteria cluster by task, as desired. At the same time, a shared universal
-  <em>&ldquo;completeness&rdquo;</em> dimension recurs across three of the four tasks, indicating a common quality core.
-  CoEval's rubrics are thus specialized to each task's demands yet anchored by a transferable notion of answer quality.
-</p>
-<figure>
-  <img src="figures/f5_rubric_heatmap.png" alt="Heatmap of pairwise semantic similarity between auto-generated rubric criteria"/>
-  <figcaption><strong>Figure 5.</strong> Pairwise semantic similarity of the 22 auto-generated rubric criteria across
-    four tasks. Block structure along the diagonal reflects task specialization (within-task $0.342 >$ cross-task
-    $0.294$), while a recurring &ldquo;completeness&rdquo; dimension forms a cross-task cluster.</figcaption>
-</figure>
-<div class="keyfinding">
-  <strong>Finding (rubrics).</strong> Auto-generated rubrics are task-specialized (within-task similarity
-  $0.342 >$ cross-task $0.294$) while sharing a universal &ldquo;completeness&rdquo; dimension across three tasks.
-</div>
-
-<h3>5.6 Contamination resistance</h3>
+<h3>5.5 Contamination resistance</h3>
 <p>
   We test the contamination-resistance claim empirically. We take the 400 CoEval-generated items from the
   <code>medium-benchmark</code> study and measure their verbatim 13-gram overlap against a corpus of 491 items drawn
@@ -815,22 +796,16 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   $0.0000$ verbatim 13-gram overlap with five major public benchmarks, so they cannot be gamed this way.
 </div>
 
-<h3>5.7 Cost</h3>
+<h3>5.6 Cost</h3>
 <p>
   The entire four-task medium-scale study, teacher generation, student response collection, cross-family judging,
   and analysis, produced <strong>7,978 valid evaluations</strong> for a total cost of <strong>USD 5.89</strong>,
   fully automated and with no human annotation. At roughly USD 0.00074 per evaluation, contamination-free, domain-targeted,
   bias-cancelled evaluation is inexpensive enough to re-run on every model release, which is exactly what a renewable,
-  contamination-resistant benchmark requires.
+  contamination-resistant benchmark requires. At roughly $1{,}350$ evaluations per dollar, CoEval runs two to three
+  orders of magnitude cheaper than typical human annotation (<a href="#appC">Appendix&nbsp;C</a>).
 </p>
-<figure>
-  <img src="figures/f6_cost.png" alt="Evaluations per dollar: CoEval versus human annotation"/>
-  <figcaption><strong>Figure 6.</strong> Throughput. CoEval produces roughly $1{,}350$ evaluations per dollar
-    (7,978 evaluations for USD 5.89), two to three orders of magnitude above typical human annotation, enabling
-    re-evaluation on every model release.</figcaption>
-</figure>
-
-<h3>5.8 Putting it together: domain case studies</h3>
+<h3>5.7 Putting it together: domain case studies</h3>
 <p>
   The preceding sections validate CoEval's components where ground truth is available. We now exercise the complete tool
   in its intended regime on three custom verticals, <em>drug&ndash;drug interaction reasoning</em>, <em>clinical
@@ -904,11 +879,11 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
 
 <p>
   <strong>Scope and limitations.</strong> Our ground-truth validation of the ranking operation uses objective
-  exact-match QA, where labels exist; on subjective custom domains (Section&nbsp;5.8) we rely on the cross-family
+  exact-match QA, where labels exist; on subjective custom domains (Section&nbsp;5.7) we rely on the cross-family
   ensemble and report intervals rather than a held-out gold ranking, because by assumption none exists. We study three
   candidate models across four tasks, an exact-match QA validation, and three custom verticals; broader model pools and additional domains would further
   test generality. The contamination guarantee is structural (fresh per-run synthesis), validated both by zero verbatim
-  overlap and by a controlled memorization study (Section&nbsp;5.6); a verbatim n-gram test is not a membership test
+  overlap and by a controlled memorization study (Section&nbsp;5.5); a verbatim n-gram test is not a membership test
   against any model's full pretraining corpus.
 </p>
 <!-- ===================== 7. CONCLUSION ===================== -->
@@ -1023,6 +998,30 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   ($\alpha = 0.05$), and confidence intervals use a <em>datapoint-clustered</em> resample wherever observations are
   nested (multiple student responses per item).
 </p>
+
+<h2 id="appB">Appendix B. Rubric structure</h2>
+<p>
+  CoEval generates a scoring rubric automatically per task. We examine whether these rubrics are appropriately
+  task-specialized while sharing a common quality core. Across the four tasks, the 22 auto-generated rubric criteria
+  exhibit a mean <em>within-task</em> semantic similarity of $0.342$, exceeding the mean <em>cross-task</em> similarity
+  of $0.294$: criteria cluster by task, as desired. At the same time, a shared universal
+  <em>&ldquo;completeness&rdquo;</em> dimension recurs across three of the four tasks, indicating a common quality core.
+  CoEval's rubrics are thus specialized to each task's demands yet anchored by a transferable notion of answer quality.
+</p>
+<figure>
+  <img src="figures/f5_rubric_heatmap.png" alt="Heatmap of pairwise semantic similarity between auto-generated rubric criteria"/>
+  <figcaption><strong>Figure 5.</strong> Pairwise semantic similarity of the 22 auto-generated rubric criteria across
+    four tasks. Block structure along the diagonal reflects task specialization (within-task $0.342 >$ cross-task
+    $0.294$), while a recurring &ldquo;completeness&rdquo; dimension forms a cross-task cluster.</figcaption>
+</figure>
+
+<h2 id="appC">Appendix C. Evaluation throughput</h2>
+<figure>
+  <img src="figures/f6_cost.png" alt="Evaluations per dollar: CoEval versus human annotation"/>
+  <figcaption><strong>Figure 6.</strong> Throughput. CoEval produces roughly $1{,}350$ evaluations per dollar
+    (7,978 evaluations for USD 5.89), two to three orders of magnitude above typical human annotation, enabling
+    re-evaluation on every model release.</figcaption>
+</figure>
 
 </div>
 </body>

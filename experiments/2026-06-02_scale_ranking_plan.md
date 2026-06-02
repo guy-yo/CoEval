@@ -39,6 +39,35 @@ N_students(15) x N_items(100) = 1500 responses (~$1-2 cheap tier)
 Generation one-time ~$0.5. Total ~$10-20. Fully parallelizable (AsyncOpenAI / OpenRouter),
 no GPU. Use OpenAI Batch-equivalent where available to halve cost.
 
+## Batch-interface cost reduction (use the framework's native batch support)
+The dominant cost is the judging step (judges x responses x rubric aspects), which is an
+embarrassingly batchable, latency-tolerant offline workload, exactly what provider Batch
+APIs are for (~50% discount, <=24 h turnaround). CoEval already supports batch per provider
+(`interface: openai|anthropic|gemini|vertex|azure_openai|bedrock|mistral`; batch discounts
+live in `Config/provider_pricing.yaml`, surfaced by `coeval plan`).
+
+Routing for this experiment:
+- **Judging (bulk cost): route the panel through batch-capable native interfaces.** Put the
+  OpenAI judge on `interface: openai` (OpenAI Batch, 50% off), the Anthropic judge on
+  `interface: anthropic` (Message Batches, 50% off), optionally a Mistral judge on
+  `interface: mistral` (Batch, 50% off). NOTE: the `gemini` interface is a concurrent
+  pseudo-batch (thread pool, NO async discount per `provider_pricing.yaml`); for a true 50%
+  discount on a Google judge use `interface: vertex` (Vertex Batch Prediction) instead.
+- **Student generation (smaller cost): also batch the OpenAI/Anthropic/Gemini students;**
+  the open-weight students (llama/qwen/mistral-small) can stay on a cheap real-time route
+  (OpenRouter/Groq) since those have no batch tier and the per-call price is already tiny.
+- **Non-batch providers** (openrouter, groq, deepseek) stay real-time at cheap-tier price;
+  do NOT force them through a batch path they do not have.
+- **Pre-flight with `coeval plan --config scale.yaml`** to read the batch-vs-realtime cost
+  table BEFORE launch (budget-aware planning), then `coeval run` writes the batch jobs and
+  `coeval status` fetches results.
+
+Revised cost equation:
+real-time ~= $15-20  ->  batch-routed judging+generation ~= **$7-11** (judging halved is the
+big lever; the open-weight real-time tail is already cheap). Turnaround <= 24 h, acceptable
+for an offline strengthening experiment; if a same-day result is needed, run real-time and
+pay the ~2x. Arm a spend watchdog and `coeval status` polling rather than blocking.
+
 ## Recommendation
 - **Axis 2 (rank 12-20 candidate models on a verifiable task): YES, run it.** Highest-value
   next experiment; retires the 3-model residual and answers the scaling question with a
@@ -47,4 +76,6 @@ no GPU. Use OpenAI Batch-equivalent where available to halve cost.
   judge logs; do NOT propose a large judge panel as the operating point (the thesis says a
   selected small panel is more reliable).
 - Both run from one config through the actual framework (real pipeline, not paper-only code).
-Awaiting go to launch (cost ~$15-20).
+- **Route batch-capable judges/students through native Batch interfaces (~50% off the bulk
+  judging cost); pre-flight with `coeval plan`.** Batch-routed cost ~$7-11 vs ~$15-20 real-time.
+Awaiting go to launch.
