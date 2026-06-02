@@ -124,7 +124,18 @@ class OpenRouterInterface(ModelInterface):
         for attempt in range(3):
             try:
                 response = self._client.chat.completions.create(**kwargs)
-                return response.choices[0].message.content.strip()
+                msg = response.choices[0].message
+                # Reasoning models (and some refusals) return content=None and put
+                # text in a non-standard "reasoning" field; fall back to it before
+                # failing, so one odd response does not crash the generation loop.
+                content = msg.content if msg.content is not None else getattr(msg, "reasoning", None)
+                if content is None:
+                    raise ValueError(
+                        "OpenRouter returned empty content (choices[0].message.content "
+                        f"is None, finish_reason={response.choices[0].finish_reason!r}); "
+                        "the model may have spent its token budget on reasoning -- "
+                        "raise max_tokens or use a non-reasoning model")
+                return content.strip()
             except Exception as exc:
                 err_lower = str(exc).lower()
                 if any(sig in err_lower for sig in _FATAL_SIGNALS):
