@@ -1,0 +1,47 @@
+{
+  "experiment": "v2_ranking_stability",
+  "run": "E:\\Projects\\CoEval\\main\\Runs\\EXP001b-exactmatch-qa",
+  "B": 2000,
+  "true_order": [
+    "gpt-4o-mini",
+    "gpt-3.5-turbo",
+    "llama-3.2-3b"
+  ],
+  "ground_truth_acc": {
+    "gpt-4o-mini": 0.969,
+    "gpt-3.5-turbo": 0.942,
+    "llama-3.2-3b": 0.832
+  },
+  "results": [
+    {
+      "method": "single:claude-sonnet-4",
+      "p_full_ranking": 0.9995,
+      "p_top2_order": 0.9995
+    },
+    {
+      "method": "single:gemini-flash",
+      "p_full_ranking": 0.9995,
+      "p_top2_order": 0.9995
+    },
+    {
+      "method": "single:gpt-4o",
+      "p_full_ranking": 0.9995,
+      "p_top2_order": 0.9995
+    },
+    {
+      "method": "ENSEMBLE (cross-family)",
+      "p_full_ranking": 0.9995,
+      "p_top2_order": 0.9995
+    },
+    {
+      "method": "single:claude-haiku",
+      "p_full_ranking": 0.9985,
+      "p_top2_order": 0.9985
+    },
+    {
+      "method": "single:gpt-3.5-turbo",
+      "p_full_ranking": 0.9985,
+      "p_top2_order": 0.9985
+    }
+  ]
+}
