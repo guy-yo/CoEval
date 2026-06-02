@@ -685,6 +685,17 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   the clean-panel accuracy ($0.228$). A single judge offers no such safeguard, because there is nothing to check it
   against: the panel turns the absence of labels from a liability into a design that validates itself.
 </p>
+<p>
+  This self-correction has a precise boundary, and the boundary is exactly the cross-family design. It tolerates any
+  number of <em>independent</em> broken judges: adding six uniform-random judges to the four-judge panel leaves the
+  reliability-weighted accuracy at $0.25$ while the plain mean falls to $0.16$, because independent noise never forms a
+  consensus to agree with. It fails only when a <em>correlated</em> coalition of bad judges, all sharing one
+  systematic error, <em>outnumbers</em> the competent judges: once five such judges face four good ones the coalition
+  becomes the apparent consensus, takes all the weight, and the recovered ranking inverts. Peer-agreement weighting is
+  therefore only as safe as the independence of judge errors, and <em>vendor diversity is what supplies that
+  independence</em>: judges from distinct model families are unlikely to share a bias coalition. The robustness of the
+  aggregator and the cross-family composition principle are two sides of one design.
+</p>
 <div class="keyfinding">
   <strong>Finding (self-validating panel).</strong> A panel both suppresses and <em>diagnoses</em> bad judges with no
   labels. Adding three broken judges (random, constant, anti-correlated) to a four-judge panel nearly halves the

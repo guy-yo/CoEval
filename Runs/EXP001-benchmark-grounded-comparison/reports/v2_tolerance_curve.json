@@ -1,0 +1,95 @@
+{
+  "experiment": "v2_tolerance_curve",
+  "run": "EXP001-benchmark-grounded-comparison",
+  "n_real_judges": 4,
+  "n_responses": 900,
+  "clean_accuracy": 0.237,
+  "independent_bad_judges": [
+    {
+      "k_bad": 0,
+      "plain_mean": 0.237,
+      "reliability_weighted": 0.246,
+      "bad_total_weight": 0
+    },
+    {
+      "k_bad": 1,
+      "plain_mean": 0.165,
+      "reliability_weighted": 0.246,
+      "bad_total_weight": 0.0
+    },
+    {
+      "k_bad": 2,
+      "plain_mean": 0.213,
+      "reliability_weighted": 0.255,
+      "bad_total_weight": 0.055
+    },
+    {
+      "k_bad": 3,
+      "plain_mean": 0.157,
+      "reliability_weighted": 0.236,
+      "bad_total_weight": 0.078
+    },
+    {
+      "k_bad": 4,
+      "plain_mean": 0.216,
+      "reliability_weighted": 0.258,
+      "bad_total_weight": 0.05
+    },
+    {
+      "k_bad": 5,
+      "plain_mean": 0.123,
+      "reliability_weighted": 0.245,
+      "bad_total_weight": 0.029
+    },
+    {
+      "k_bad": 6,
+      "plain_mean": 0.162,
+      "reliability_weighted": 0.249,
+      "bad_total_weight": 0.098
+    }
+  ],
+  "correlated_coalition": [
+    {
+      "k_bad": 0,
+      "plain_mean": 0.237,
+      "reliability_weighted": 0.246,
+      "bad_total_weight": 0
+    },
+    {
+      "k_bad": 1,
+      "plain_mean": 0.227,
+      "reliability_weighted": 0.246,
+      "bad_total_weight": 0.0
+    },
+    {
+      "k_bad": 2,
+      "plain_mean": 0.226,
+      "reliability_weighted": 0.216,
+      "bad_total_weight": 0.0
+    },
+    {
+      "k_bad": 3,
+      "plain_mean": 0.173,
+      "reliability_weighted": NaN,
+      "bad_total_weight": 0.0
+    },
+    {
+      "k_bad": 4,
+      "plain_mean": 0.056,
+      "reliability_weighted": NaN,
+      "bad_total_weight": 0.0
+    },
+    {
+      "k_bad": 5,
+      "plain_mean": -0.168,
+      "reliability_weighted": -0.231,
+      "bad_total_weight": 1.0
+    },
+    {
+      "k_bad": 6,
+      "plain_mean": -0.186,
+      "reliability_weighted": -0.218,
+      "bad_total_weight": 1.0
+    }
+  ]
+}
