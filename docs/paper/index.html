@@ -251,7 +251,7 @@
   labeled data</em>: building a representative benchmark by hand is slow and costly, and for a new or proprietary domain
   it may not exist at all. Second, even where a related public benchmark exists, its numbers may not be trustworthy:
   popular benchmarks are increasingly <em>contaminated</em>, their items having leaked into pretraining corpora, so a
-  high score can reflect memorization rather than capability <sup><a href="#r12">[12]</a><a href="#r13">[13]</a></sup>.
+  high score can reflect memorization rather than capability [<a href="#r12">12</a>, <a href="#r13">13</a>].
   When both hold, with no data <em>and</em> no benchmark one can trust, the practitioner is stuck. <strong>CoEval</strong>
   is built for exactly this situation: it generates a fresh, domain-targeted evaluation from a task description and
   ranks candidate models on it, with no labels and no contaminated items.
@@ -262,16 +262,16 @@
   static benchmarks are <em>non-extensible</em>: extending a benchmark to a new capability, domain, or difficulty band
   requires fresh human annotation, which is slow and expensive. Second, they are <em>contamination-prone</em>: as models
   ingest ever-larger web crawls, public test items leak into pretraining corpora, and measured performance reflects
-  memorization rather than generalization <sup><a href="#r12">[12]</a><a href="#r13">[13]</a></sup>. Third, they are
+  memorization rather than generalization [<a href="#r12">12</a>, <a href="#r13">13</a>]. Third, they are
   <em>generic</em>: a fixed benchmark measures an average-case distribution that rarely matches the input distribution,
   scoring criteria, or edge cases of any particular production system.
 </p>
 <p>
-  LLM-as-judge evaluation <sup><a href="#r1">[1]</a><a href="#r2">[2]</a></sup> addresses the cost and extensibility of
+  LLM-as-judge evaluation [<a href="#r1">1</a>, <a href="#r2">2</a>] addresses the cost and extensibility of
   scoring: a capable model grades free-form responses against a rubric at a fraction of the cost of human raters. But a
   single judge is not a neutral instrument. Judges exhibit <em>positional bias</em> (preferring the first option in a
   pairwise comparison), <em>verbosity bias</em> (rewarding longer answers irrespective of quality)
-  <sup><a href="#r8">[8]</a></sup>, and <em>self-preference bias</em> (scoring outputs from their own model family more
+  [<a href="#r8">8</a>], and <em>self-preference bias</em> (scoring outputs from their own model family more
   favorably). A measurement built on a single biased instrument inherits that instrument's distortions wholesale.
 </p>
 <p>
@@ -310,15 +310,15 @@
 <p>
   CoEval sits at the intersection of three lines of work, each motivated by one half of the practitioner's problem.
   (i)&nbsp;A growing body of evidence shows that <em>public benchmarks cannot be taken at face value</em>: their items
-  leak into pretraining corpora and inflate scores through memorization (GSM1k <sup><a href="#r12">[12]</a></sup>,
-  contamination surveys <sup><a href="#r13">[13]</a></sup>), which has driven continuously-refreshed <em>live</em>
-  benchmarks (LiveBench <sup><a href="#r22">[22]</a></sup>, LiveCodeBench <sup><a href="#r23">[23]</a></sup>) and
-  exposed leakage on the judge side as well (Preference Leakage <sup><a href="#r15">[15]</a></sup>). (ii)&nbsp;When no
+  leak into pretraining corpora and inflate scores through memorization (GSM1k [<a href="#r12">12</a>],
+  contamination surveys [<a href="#r13">13</a>]), which has driven continuously-refreshed <em>live</em>
+  benchmarks (LiveBench [<a href="#r22">22</a>], LiveCodeBench [<a href="#r23">23</a>]) and
+  exposed leakage on the judge side as well (Preference Leakage [<a href="#r15">15</a>]). (ii)&nbsp;When no
   labeled data exists, <em>automated benchmark generation</em> synthesizes evaluation items directly (AutoBencher
-  <sup><a href="#r9">[9]</a></sup>, BenchAgents <sup><a href="#r10">[10]</a></sup>, YourBench
-  <sup><a href="#r11">[11]</a></sup>, domain-specific construction <sup><a href="#r25">[25]</a></sup>).
-  (iii)&nbsp;<em>LLM-as-judge</em> methods (G-Eval <sup><a href="#r2">[2]</a></sup>, Prometheus&nbsp;2
-  <sup><a href="#r3">[3]</a></sup>, panels <sup><a href="#r5">[5]</a></sup>) provide label-free scoring but inherit
+  [<a href="#r9">9</a>], BenchAgents [<a href="#r10">10</a>], YourBench
+  [<a href="#r11">11</a>], domain-specific construction [<a href="#r25">25</a>]).
+  (iii)&nbsp;<em>LLM-as-judge</em> methods (G-Eval [<a href="#r2">2</a>], Prometheus&nbsp;2
+  [<a href="#r3">3</a>], panels [<a href="#r5">5</a>]) provide label-free scoring but inherit
   individual-judge biases. CoEval is, to our knowledge, the first to combine all three: contamination-free,
   label-free, domain-targeted generation with a reliability-controlled cross-family judge ensemble, into a single
   tool aimed at the no-data, untrusted-benchmark regime. We detail each line below.
@@ -326,35 +326,35 @@
 
 <h3>2.1 LLM-as-judge and judge panels</h3>
 <p>
-  MT-Bench and Chatbot Arena <sup><a href="#r1">[1]</a></sup> established LLM-as-judge as a scalable proxy for human
-  preference, and documented its biases. G-Eval <sup><a href="#r2">[2]</a></sup> uses a single strong model with
+  MT-Bench and Chatbot Arena [<a href="#r1">1</a>] established LLM-as-judge as a scalable proxy for human
+  preference, and documented its biases. G-Eval [<a href="#r2">2</a>] uses a single strong model with
   chain-of-thought to score generation quality against a user-supplied rubric, while Prometheus&nbsp;2
-  <sup><a href="#r3">[3]</a></sup> trains a dedicated open evaluator. These approaches are <em>single-judge</em>: they
+  [<a href="#r3">3</a>] trains a dedicated open evaluator. These approaches are <em>single-judge</em>: they
   require the user to provide the rubric and inherit one model's biases. CoEval instead <em>generates</em> the rubric
-  automatically from the task definition and aggregates across a diverse panel. FLAMe <sup><a href="#r4">[4]</a></sup>
-  and JudgeBench <sup><a href="#r6">[6]</a></sup> study the reliability of judge models, and BiGGen-Bench
-  <sup><a href="#r7">[7]</a></sup> introduces instance-specific evaluation criteria; CoEval is complementary, adding a
+  automatically from the task definition and aggregates across a diverse panel. FLAMe [<a href="#r4">4</a>]
+  and JudgeBench [<a href="#r6">6</a>] study the reliability of judge models, and BiGGen-Bench
+  [<a href="#r7">7</a>] introduces instance-specific evaluation criteria; CoEval is complementary, adding a
   cross-family aggregation layer and live agreement monitoring on top of any such judges.
 </p>
 <p>
-  Closest to our judging design is <em>Replacing Judges with Juries</em> (PoLL) <sup><a href="#r5">[5]</a></sup>, which
+  Closest to our judging design is <em>Replacing Judges with Juries</em> (PoLL) [<a href="#r5">5</a>], which
   shows a panel of smaller judges can rival a single large judge while reducing intra-model bias and cost. CoEval shares
   the panel philosophy but extends it in three ways: (i) it couples the panel to <em>attribute-controlled,
   contamination-free generation</em> rather than scoring a fixed set; (ii) it enforces explicit <em>cross-family</em>
   composition and reports the finding that composition dominates size; and (iii) it adds role separation
-  (teacher/student/judge) with self-preference monitoring built in. ChatEval <sup><a href="#r21">[21]</a></sup> and
-  meta-judge frameworks <sup><a href="#r26">[26]</a></sup> improve reliability through intra-pool multi-agent
+  (teacher/student/judge) with self-preference monitoring built in. ChatEval [<a href="#r21">21</a>] and
+  meta-judge frameworks [<a href="#r26">26</a>] improve reliability through intra-pool multi-agent
   deliberation; CoEval instead rotates models <em>across vendors</em>, targeting cross-family bias cancellation rather
   than intra-pool debate alone.
 </p>
 <p>
   Our cross-family design is directly motivated by recent evidence that judge&ndash;generator relatedness is itself a
-  contamination vector. <em>Preference Leakage</em> <sup><a href="#r15">[15]</a></sup> shows that a judge sharing a model,
+  contamination vector. <em>Preference Leakage</em> [<a href="#r15">15</a>] shows that a judge sharing a model,
   lineage, or vendor family with the generator silently inflates scores, and <em>Play Favorites</em>
-  <sup><a href="#r16">[16]</a></sup> measures this same-family bias statistically, finding that frontier models favor
-  same-family outputs. Self-preference has been characterized mechanistically <sup><a href="#r18">[18]</a></sup> and
-  partly attributed to legitimate capability rather than pure bias <sup><a href="#r24">[24]</a></sup>. Broad bias
-  taxonomies <sup><a href="#r17">[17]</a></sup> and recent surveys <sup><a href="#r19">[19]</a></sup><sup><a href="#r20">[20]</a></sup>
+  [<a href="#r16">16</a>] measures this same-family bias statistically, finding that frontier models favor
+  same-family outputs. Self-preference has been characterized mechanistically [<a href="#r18">18</a>] and
+  partly attributed to legitimate capability rather than pure bias [<a href="#r24">24</a>]. Broad bias
+  taxonomies [<a href="#r17">17</a>] and recent surveys [<a href="#r19">19</a>, <a href="#r20">20</a>]
   catalogue position, verbosity, and self-enhancement biases on fixed benchmarks. Where these works <em>measure</em> or
   <em>post-hoc correct</em> the biases of individual judges, CoEval treats cross-family composition as a <em>design
   constraint</em> that cancels same-family preference at the aggregation level, and pairs it with
@@ -363,22 +363,22 @@
 
 <h3>2.2 Automated and contamination-resistant benchmark generation</h3>
 <p>
-  AutoBencher <sup><a href="#r9">[9]</a></sup> searches for benchmark questions that optimize difficulty and novelty,
+  AutoBencher [<a href="#r9">9</a>] searches for benchmark questions that optimize difficulty and novelty,
   but evaluates with a <em>single</em> judge and does not enforce cross-family scoring or role separation. CoEval adds a
   cross-family multi-judge layer, explicit teacher/student/judge role separation, and continuous inter-judge agreement
-  monitoring. BenchAgents <sup><a href="#r10">[10]</a></sup> and YourBench <sup><a href="#r11">[11]</a></sup> likewise
+  monitoring. BenchAgents [<a href="#r10">10</a>] and YourBench [<a href="#r11">11</a>] likewise
   automate benchmark construction; CoEval's distinguishing feature is attribute-<em>stratified</em> coverage: the
   sampler allocates a per-stratum floor of items to each declared attribute combination, coupled to bias-cancelled
   scoring. The contamination motivation is sharpened by GSM1k
-  <sup><a href="#r12">[12]</a></sup>, which exposed memorization on grade-school arithmetic, and by recent surveys of
-  data contamination in LLMs <sup><a href="#r13">[13]</a></sup>. Live benchmarks such as LiveBench
-  <sup><a href="#r22">[22]</a></sup> and LiveCodeBench <sup><a href="#r23">[23]</a></sup> limit leakage by continuously
+  [<a href="#r12">12</a>], which exposed memorization on grade-school arithmetic, and by recent surveys of
+  data contamination in LLMs [<a href="#r13">13</a>]. Live benchmarks such as LiveBench
+  [<a href="#r22">22</a>] and LiveCodeBench [<a href="#r23">23</a>] limit leakage by continuously
   releasing fresh, time-windowed items, but rely on human-curated questions with objective answers and avoid LLM judges;
   CoEval extends contamination resistance to <em>open-ended, judge-scored</em> tasks by generating fresh,
-  attribute-controlled items on demand. Dynabench <sup><a href="#r14">[14]</a></sup> proposed dynamic, human-in-the-loop
+  attribute-controlled items on demand. Dynabench [<a href="#r14">14</a>] proposed dynamic, human-in-the-loop
   renewal; CoEval automates renewal without humans. Constructing domain-specific evaluation sets for LLM judges
-  <sup><a href="#r25">[25]</a></sup> targets verticals such as medicine and law; CoEval generates such domain-targeted
-  items automatically within the same pipeline. Length-Controlled AlpacaEval <sup><a href="#r8">[8]</a></sup> debiases for
+  [<a href="#r25">25</a>] targets verticals such as medicine and law; CoEval generates such domain-targeted
+  items automatically within the same pipeline. Length-Controlled AlpacaEval [<a href="#r8">8</a>] debiases for
   verbosity post hoc on a single judge; CoEval instead cancels verbosity bias through panel diversity (Section&nbsp;5.3).
 </p>
 
@@ -542,7 +542,7 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
   strongest member: the experiment establishes that CoEval judges are <em>accurate</em> and that the result is
   <em>vendor-independent</em>: no single provider drives it. On open-ended summarization scored against a lexical
   BERTScore reference, the cross-family ensemble ($\rho = 0.244$) tracks ground truth on par with a single GPT-4o
-  <strong>G-Eval</strong> <sup><a href="#r2">[2]</a></sup> judge using chain-of-thought ($\rho = 0.259$, 95% CI
+  <strong>G-Eval</strong> [<a href="#r2">2</a>] judge using chain-of-thought ($\rho = 0.259$, 95% CI
   $[0.18, 0.33]$, $n=580$), matching this strong single-judge baseline without depending on any one model. The ensemble's
   decisive advantage on such open-ended tasks is <em>bias-robustness</em>: individual judges carry verbosity biases of
   opposite sign that the ensemble provably cancels (Section&nbsp;5.3), paired with the contamination-resistant items
@@ -675,8 +675,8 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
 <h3>5.4 Cross-family self-preference: a design property</h3>
 <p>
   Recent work establishes that judge&ndash;generator relatedness inflates scores: <em>Preference Leakage</em>
-  <sup><a href="#r15">[15]</a></sup> identifies same-model and same-family relatedness as a contamination vector, and
-  <em>Play Favorites</em> <sup><a href="#r16">[16]</a></sup> measures frontier models favoring same-family outputs.
+  [<a href="#r15">15</a>] identifies same-model and same-family relatedness as a contamination vector, and
+  <em>Play Favorites</em> [<a href="#r16">16</a>] measures frontier models favoring same-family outputs.
   CoEval addresses this <em>structurally</em>: by requiring the judge panel to be vendor-disjoint from the student under
   test, it precludes a model from scoring its own family, eliminating the self-preference channel by design rather than
   by post-hoc correction. Because no judge ever scores its own family, a same-family preference cannot enter the
