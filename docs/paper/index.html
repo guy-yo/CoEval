@@ -224,6 +224,10 @@
     <em>composition</em> (diversity across vendor families), not panel <em>size</em>, determines
     reliability, and indiscriminately enlarging a panel can <em>reduce</em> it (inter-rater reliability peaks at two
     well-chosen judges and falls as low-agreement judges are added, exactly matching the Spearman&ndash;Brown relation).
+    Composition is what makes a single judge unsafe to pick blind: on a benchmark-grounded set the candidate judges range
+    from anti-correlated to moderately correlated with ground truth (a judge-choice regret of $0.35$), whereas the
+    cross-family ensemble is never anti-correlated, and an unsupervised reliability-weighted aggregator is the strongest
+    label-free choice.
     CoEval fills three roles, <em>teacher</em>, <em>student</em>, and <em>judge</em>, from one shared pool of models: any model can take any role, and a model that judges in one run can be a candidate in another, all configured from a single file across many provider interfaces. Generated items have $0.0000$ verbatim 13-gram overlap with five major public benchmarks. Across a four-task medium-scale
     study, CoEval produced 7,978 valid evaluations at a total cost of USD 5.89 with no human annotation. We show that the
     ensemble removes a verbosity bias that no single judge avoids (mean per-judge $|r| = 0.153$ collapses to an ensemble
