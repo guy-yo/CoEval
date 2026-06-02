@@ -214,7 +214,7 @@
     benchmark generators still score with a single, bias-prone judge; LLM-as-judge panels presuppose that an evaluation
     set already exists; and continually refreshed live benchmarks curb leakage only through ongoing human curation and
     avoid open-ended, judge-scored tasks. No existing approach supplies contamination-free, label-free, domain-targeted
-    evaluation end to end. We present <strong>CoEval</strong>, an open-source framework that
+    evaluation end to end. We present <strong>CoEval</strong>, an open-source, reusable framework that
     addresses both conditions: from only a description of a task or domain, teacher models synthesize a fresh,
     attribute-controlled benchmark with <em>no human labels</em>, contamination-free because items are generated
     anew on each run. A cross-family judge ensemble then ranks candidate models, with no human raters. We validate the
@@ -234,7 +234,7 @@
     $r = +0.010$ with a bootstrap CI spanning zero, a 93% reduction) and structurally precludes same-family
     self-preference, while producing task-specialized rubrics that share a universal quality core. On objective
     exact-match QA the frontier cross-family ensemble tracks ground-truth correctness at $\rho = 0.86$
-    (datapoint-clustered 95% CI $[0.77, 0.94]$) with vendor-independent agreement. This non-monotone reliability result, where adding low-agreement judges <em>reduces</em> reliability, is what lets a small, well-chosen cross-family panel serve as a trustworthy, label-free substitute for a contaminated leaderboard.
+    (datapoint-clustered 95% CI $[0.77, 0.94]$) with vendor-independent agreement. This non-monotone reliability result, where adding low-agreement judges <em>reduces</em> reliability, is what lets a small, well-chosen cross-family panel serve as a trustworthy, label-free substitute for a contaminated leaderboard, one that any team can regenerate for its own application and re-run on every model release.
   </p>
 </section>
 
@@ -287,12 +287,16 @@
   <li><strong>(3) Bias-cancelling aggregation.</strong> Consensus aggregation across a vendor-diverse panel cancels
     verbosity bias that individual judges carry with mixed sign, and the vendor-disjoint design structurally precludes
     same-family self-preference.</li>
-  <li><strong>(4) An open, declarative system that ranks models from one specification.</strong> CoEval is model-agnostic and
+  <li><strong>(4) A reusable, open framework, not a one-off benchmark.</strong> CoEval is model-agnostic and
     task-agnostic: any model reachable through a broad range of provider interfaces (cloud, open-weight, or local) can
-    serve as teacher, student, or judge, and a task or domain is described declaratively. Ranking a family of candidate
-    models on a custom use case requires only this declarative specification, and we demonstrate (Section&nbsp;5.1, Table&nbsp;3) that CoEval
-    recovers the correct ground-truth ranking. The whole pipeline is reproducible from a single declarative
-    configuration.</li>
+    serve as teacher, student, or judge, and a task or domain is supplied declaratively at whatever level of detail the
+    practitioner has, from a one-line objective that the framework expands into a complete configuration, through a
+    minimal task description, to a fully hand-written specification. The <em>same</em> pipeline applies unchanged to any
+    domain and is cheap enough to re-run on every model release, so a team obtains a renewable, application-specific
+    benchmark rather than a fixed leaderboard. Ranking candidate models on a custom use case requires only this
+    specification, and CoEval recovers the correct ground-truth ranking wherever one exists to check against
+    (Section&nbsp;5.1, Table&nbsp;3). The whole pipeline is open-source and reproducible from a single declarative
+    configuration file.</li>
 </ul>
 <p>
   CoEval requires no human annotation. In a four-task medium-scale study it produced 7,978 valid evaluations for
@@ -817,7 +821,8 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   vertical, CoEval's teacher generated 40 attribute-stratified items (for drug interactions, stratified over severity,
   mechanism, and patient context), three candidate models answered them, and the cross-family ensemble
   (OpenAI&nbsp;+&nbsp;Anthropic&nbsp;+&nbsp;Google) scored every response, all from a single configuration file, with
-  no human labels or raters.
+  no human labels or raters. <a href="#appD">Appendix&nbsp;D</a> shows the actual generated artifacts for all three
+  domains: the one-line seed, the auto-generated attribute strata and rubric, and a representative synthesized item.
 </p>
 <p>
   On the drug-interaction vertical CoEval produces a <strong>clean, fully unanimous ranking</strong>: all three
@@ -895,8 +900,10 @@ $$\bar{s}_i \;=\; \frac{1}{|J|} \sum_{j \in J} s_{ij}.$$
   produces task-specialized rubrics with a shared quality core, while also converging
   to a stable full-panel consensus (Spearman $\rho$ up to $1.00$), all at USD 5.89 for 7,978 evaluations. Our
   central finding, that judge-panel <em>composition</em> rather than size is the decisive reliability lever, offers a
-  concrete and inexpensive recipe for trustworthy, renewable LLM evaluation. CoEval is open-source, declarative, and
-  fully reproducible.
+  concrete and inexpensive recipe for trustworthy, renewable LLM evaluation. Because the same declarative pipeline runs
+  unchanged across models and domains and is cheap enough to repeat on every model release, CoEval is a reusable
+  instrument a team points at its own application when neither labeled data nor a trustworthy benchmark exists, rather
+  than a single static study. CoEval is open-source, declarative, and fully reproducible.
 </p>
 
 <!-- ===================== REFERENCES ===================== -->
@@ -1022,6 +1029,66 @@ $$\kappa \;=\; \frac{p_o - p_e}{1 - p_e},$$
     (7,978 evaluations for USD 5.89), two to three orders of magnitude above typical human annotation, enabling
     re-evaluation on every model release.</figcaption>
 </figure>
+
+<h2 id="appD">Appendix D. Worked examples on data-scarce domains</h2>
+<p>
+  The three verticals of Section&nbsp;5.7 are domains where a practitioner typically has <em>no</em> labeled
+  benchmark and no trustworthy public one: drug&ndash;drug interaction (DDI) reasoning, clinical decision support, and
+  legal analysis. The artifacts below are the <em>actual</em> output CoEval generated for each, from a single one-line
+  task description and with no human labels. From that description the teacher inferred the attribute strata, synthesized
+  $40$ contamination-free items stratified over them, and wrote a scoring rubric; the vendor-disjoint panel
+  (OpenAI&nbsp;+&nbsp;Anthropic&nbsp;+&nbsp;Google) then ranked three candidate models (Table&nbsp;5).
+</p>
+<div class="tablewrap">
+<table class="data">
+  <caption><strong>Table D1.</strong> From a one-line description to a scored benchmark, for three domains with no
+    public labeled data. The attribute strata and rubric criteria are auto-generated by the teacher; each domain yields
+    $40$ stratified, contamination-free items, scored by the cross-family panel.</caption>
+  <thead><tr><th class="lbl">Domain and one-line seed</th><th>Auto-generated attribute strata</th><th>Auto-generated rubric</th></tr></thead>
+  <tbody>
+    <tr><td class="lbl"><strong>Drug&ndash;drug interaction reasoning</strong><br/>
+      <em>"given two or more co-administered drugs and a patient context, assess the interaction, its mechanism, severity, and clinical action"</em></td>
+      <td>severity {contraindicated, major, moderate, minor}; mechanism {pharmacokinetic, pharmacodynamic};
+        patient_context {renal, hepatic, polypharmacy-elderly, pregnancy}</td>
+      <td>interaction_accuracy, severity_correct, safety, completeness</td></tr>
+    <tr><td class="lbl"><strong>Clinical reasoning</strong><br/>
+      <em>"a clinical reasoning question a clinician would face, requiring medical knowledge and safe, accurate reasoning"</em></td>
+      <td>specialty {cardiology, infectious_disease, pediatrics, oncology, emergency}; difficulty {routine, intermediate, hard}</td>
+      <td>clinical_accuracy, safety, completeness, clarity</td></tr>
+    <tr><td class="lbl"><strong>Legal analysis</strong><br/>
+      <em>"a legal analysis question requiring identification of the relevant rule and correct application to the facts"</em></td>
+      <td>area_of_law {contracts, torts, criminal, constitutional, intellectual_property}; complexity {basic, intermediate, advanced}</td>
+      <td>legal_accuracy, reasoning_quality, completeness, clarity</td></tr>
+  </tbody>
+</table>
+</div>
+<p>
+  One representative <em>generated</em> item per domain (verbatim teacher output, labeled with its sampled attribute
+  cell), showing the synthesized items are specific and realistic rather than templated:
+</p>
+<ul class="tight">
+  <li><strong>DDI</strong> (severity = moderate, mechanism = pharmacokinetic, patient_context = pregnancy):
+    <em>"A 30-year-old pregnant woman is prescribed lamotrigine for bipolar disorder and is also taking oral
+    contraceptives. Assess the drug&ndash;drug interaction between these medications, identify the mechanism, and provide
+    the severity and clinical recommendation."</em></li>
+  <li><strong>Clinical</strong> (specialty = cardiology, difficulty = routine):
+    <em>"A 62-year-old male with a history of hypertension and hyperlipidemia presents with progressive shortness of
+    breath and occasional palpitations. On examination, you note elevated jugular venous pressure and a third heart
+    sound. An ECG shows left ventricular hypertrophy. What is the most likely diagnosis and what initial management
+    strategy should be considered?"</em></li>
+  <li><strong>Legal</strong> (area_of_law = torts, complexity = basic):
+    <em>"Alice, while jogging in the park, trips over a tree root that has been exposed due to erosion and falls,
+    breaking her wrist. The park is owned by the city, and Alice claims the city is liable for her injuries due to
+    negligence. Identify the relevant rule and determine if Alice can successfully hold the city liable."</em></li>
+</ul>
+<p>
+  Each item is scored on its rubric by the panel, producing the rankings in Table&nbsp;5. On DDI the three judges are
+  unanimous, <code>gpt-4o-mini</code> ($0.770$) &gt; <code>gpt-3.5-turbo</code> ($0.682$) &gt;
+  <code>llama-3.2-3b</code> ($0.497$), with non-overlapping confidence intervals; on clinical reasoning the two stronger
+  models are statistically close ($0.873$ vs $0.864$), which the overlapping intervals correctly expose. The entire path
+  from a one-line description to a defensible, contamination-free ranking is a single configuration file with no labeled
+  data and no human raters.
+</p>
 
 </div>
 </body>
