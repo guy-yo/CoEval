@@ -32,16 +32,25 @@ https://apartsinprojects.github.io/CoEval/paper/
 
 (`index.html` is served automatically for the `/paper/` path.)
 
-## Filling in pending numbers
+## Results
 
-Table 1 (Section 5.1, ground-truth correlation) is a placeholder. The cells contain `—`
-and the table is marked with an HTML comment:
+Every number, table, figure, and confidence interval in `index.html` is backed by a
+committed artifact under `Runs/**/reports/*.json`; there are no placeholders. The
+empirical sections are:
 
-```html
-<!-- EXP-001 NUMBERS PENDING -->
-```
+- **5.1** ground-truth correlation (Spearman ρ = 0.86, 95% CI [0.77, 0.94]);
+- **5.2** ensemble reliability, judge-choice regret, the self-validating panel, and the
+  **doubly-robust ranking** (recovers the true ordering of 13 models at Spearman 0.95,
+  rogue judge weight 0.00);
+- **5.3** verbosity-bias cancellation; **5.4** cross-family self-preference;
+- **5.5** contamination resistance; **5.6** cost;
+- **5.7** domain case studies on three custom verticals;
+- **5.8** rankings are domain-specific (three different models top four generated
+  domains; the pooled-best is domain-best in only 1 of 4).
 
-Search for that comment in `index.html` and replace the `—` cells with the measured EXP-001
-values (CoEval ensemble / best single judge / BERTScore / G-Eval across XSum, CNN-DM,
-CodeSearchNet, and Overall). The bootstrap-CI cells marked `—` in Table 2 can likewise be
-filled with the per-judge intervals if desired.
+## Regenerating the Word versions
+
+After any edit to `index.html`, rebuild both `.docx` downloads with the `html2doc` skill
+(single-column `CoEval.docx` via the `camera-ready-generic` profile and two-column
+`CoEval_twocolumn.docx` via the `two-column` profile). Audit for zero em-dashes, balanced
+`$` delimiters, and zero stray `$` in the rebuilt documents before committing.

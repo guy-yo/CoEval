@@ -26,6 +26,8 @@ CoEval ranks models for a custom task or domain in the hardest setting: when **n
 | Result | Evidence |
 |--------|----------|
 | Recovers the **true model ranking** with no labeled data | Spearman ρ = 0.86 vs ground-truth correctness, 95% CI [0.77, 0.94] |
+| **Doubly-robust ranking** recovers the true ordering and resists rogue judges | reliability and discrimination weighting lift rank-recovery to Spearman 0.95 across 13 models; an injected random judge receives weight 0.00 |
+| **Rankings are domain-specific**, so a generic leaderboard misleads | three different models top four CoEval-generated domains; the pooled-best model is domain-best in only 1 of 4 |
 | Cancels a **verbosity bias no single judge avoids** | ensemble *r* = +0.010 (CI spans zero), a 93% reduction |
 | **Composition over size**: panel diversity, not panel size, drives reliability | ICC(3,*k*) peaks at two well-chosen judges, falls as low-agreement judges are added |
 | Structurally precludes **same-family self-preference** | vendor-disjoint panel; aggregation shifts every score ≤ 0.015 |
@@ -87,6 +89,8 @@ Not all teachers and judges are created equal. CoEval improves signal quality by
 |:--------------:|:--------------------------------------------------------------------------- |:-------------------------------------------- |
 | 🎓 **Teacher** | **Differentiating** — produces challenges that separate student performance | A good exam question reveals who studied.    |
 | ⚖️ **Judge**   | **Consensus** — high agreement with ensemble majority                       | A reliable judge aligns with peer consensus. |
+
+These two label-free signals (item discrimination and judge agreement) combine into CoEval's **doubly-robust ranking**, which recovers the true model ordering at Spearman 0.95 across 13 candidate models and assigns an injected rogue judge zero weight. Because the best model is domain-specific, CoEval ranks on *your* domain rather than trusting a pooled leaderboard.
 
 ### Flexible provisioning
 
