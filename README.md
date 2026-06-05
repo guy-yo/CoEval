@@ -1,3 +1,24 @@
+# 🎓 Course Project — Phishing-Detection Benchmark (fork)
+
+> This is my course-project fork of **CoEval**. My assignment was to use the system to
+> build a custom **phishing-detection** evaluation benchmark, rank several LLMs on it,
+> and **find and fix a benchmark-generation diversity bug**.
+>
+> ### 👉 **[Read my full project report: REPORT.md](REPORT.md)**
+>
+> **Summary of my work:** I traced low benchmark diversity to a sampling bug in
+> `phase3.py` (the full-coverage path runs only when `sampling.target == 'all'`, otherwise
+> each item gets just one random attribute and the `label` ground-truth is often dropped),
+> fixed it, and demonstrated a clean before/after: emails went from **1 of 3 attributes
+> controlled (50% with no label)** to **all 12 attribute combinations covered, every email
+> fully labeled**. I also made the OpenRouter interface resilient to free-tier rate limits.
+> All experiments ran on OpenRouter `:free` models at **USD 0**. See [REPORT.md](REPORT.md)
+> for the root-cause analysis, before/after data, and full fix log.
+>
+> *Built on CoEval by Alexander Apartsin & Yehudit Aperstein — original project README below.*
+
+---
+
 # CoEval: Ensemble-Based Self-Evaluation for LLMs
 
 📄 **[Read the CoEval paper online](https://apartsinprojects.github.io/CoEval/)** &nbsp;·&nbsp; [Download the Word version](https://github.com/ApartsinProjects/CoEval/raw/master/docs/paper/CoEval.docx)

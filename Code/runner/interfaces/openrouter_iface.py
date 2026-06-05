@@ -49,13 +49,21 @@ OpenRouter does not expose a native batch API; requests are issued individually
 from __future__ import annotations
 
 import os
+import re
 import time
 
 from .base import ModelInterface
 
 _BASE_URL = "https://openrouter.ai/api/v1"
-_TRANSIENT_SIGNALS = ('rate limit', 'timeout', 'connection', '502', '503', '504', '529')
+_TRANSIENT_SIGNALS = ('rate limit', 'rate-limited', 'timeout', 'connection', '429', '502', '503', '504', '529')
+_RATE_LIMIT_SIGNALS = ('rate limit', 'rate-limited', '429')
 _FATAL_SIGNALS = ('invalid api key', 'authentication', 'model not found', 'does not exist')
+
+# Free-tier (`:free`) models share an upstream pool that returns HTTP 429
+# ("temporarily rate-limited upstream") with a ~30s cooldown. Retry patiently
+# so free runs can complete instead of skipping most datapoints.
+_MAX_ATTEMPTS = 6
+_RATE_LIMIT_WAIT = 20.0  # seconds, used when no explicit retry-after is provided
 
 
 class OpenRouterInterface(ModelInterface):
@@ -121,7 +129,7 @@ class OpenRouterInterface(ModelInterface):
 
         delay = 1.0
         last_err: Exception | None = None
-        for attempt in range(3):
+        for attempt in range(_MAX_ATTEMPTS):
             try:
                 response = self._client.chat.completions.create(**kwargs)
                 msg = response.choices[0].message
@@ -141,7 +149,14 @@ class OpenRouterInterface(ModelInterface):
                 if any(sig in err_lower for sig in _FATAL_SIGNALS):
                     raise
                 last_err = exc
-                if attempt < 2:
-                    time.sleep(delay)
-                    delay *= 2
+                if attempt < _MAX_ATTEMPTS - 1:
+                    if any(sig in err_lower for sig in _RATE_LIMIT_SIGNALS):
+                        # Honour an explicit retry-after if the provider sent one,
+                        # else wait a fixed cooldown for the shared free-tier pool.
+                        m = re.search(r'retry[_-]after[_a-z]*["\']?\s*[:=]\s*([0-9.]+)', err_lower)
+                        wait = (float(m.group(1)) + 2.0) if m else _RATE_LIMIT_WAIT
+                    else:
+                        wait = delay
+                        delay *= 2
+                    time.sleep(wait)
         raise last_err  # type: ignore[misc]

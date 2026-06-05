@@ -1,0 +1,154 @@
+# CoEval -- Cybersecurity: Phishing Detection (v2 — stronger teacher)
+#
+# Changes from v1:
+#   - Teacher: qwen2p5-3b (3B) replaces the tiny models as teacher
+#     → better quality emails with correct labels
+#   - Students: same 5 small models — comparing who handles phishing best
+#   - Judge: exact_match (metric) — deterministic, no bias
+#
+# Estimated LLM call budget:
+#   Phase 3 (data generation):    1 teacher x 2 items x 1 task =  2 calls
+#   Phase 4 (response collection):1 teacher x 5 students x 2 items x 1 task = 10 calls
+#   Phase 5 (evaluation):         metric judge — 0 LLM calls
+#   ─────────────────────────────────────────────────────────
+#   Total LLM calls:              12   (all local, $0 cost)
+
+models:
+  # ── 135M: student-only ──────────────────────────────────────────────────────
+  - name: smollm2-135m
+    interface: huggingface
+    parameters:
+      model: HuggingFaceTB/SmolLM2-135M-Instruct
+      temperature: 0.7
+      max_new_tokens: 512
+      device: auto
+    roles: [student]
+    role_parameters:
+      student:
+        temperature: 0.3
+        max_new_tokens: 16
+
+  # ── 360M: student-only ──────────────────────────────────────────────────────
+  - name: smollm2-360m
+    interface: huggingface
+    parameters:
+      model: HuggingFaceTB/SmolLM2-360M-Instruct
+      temperature: 0.7
+      max_new_tokens: 512
+      device: auto
+    roles: [student]
+    role_parameters:
+      student:
+        temperature: 0.3
+        max_new_tokens: 16
+
+  # ── 1.7B: student-only ──────────────────────────────────────────────────────
+  - name: smollm2-1b7
+    interface: huggingface
+    parameters:
+      model: HuggingFaceTB/SmolLM2-1.7B-Instruct
+      temperature: 0.7
+      max_new_tokens: 512
+      device: auto
+    roles: [student]
+    role_parameters:
+      student:
+        temperature: 0.3
+        max_new_tokens: 16
+
+  # ── 0.5B: student-only ──────────────────────────────────────────────────────
+  - name: qwen2p5-0b5
+    interface: huggingface
+    parameters:
+      model: Qwen/Qwen2.5-0.5B-Instruct
+      temperature: 0.7
+      max_new_tokens: 512
+      device: auto
+    roles: [student]
+    role_parameters:
+      student:
+        temperature: 0.3
+        max_new_tokens: 16
+
+  # ── 1.5B: student-only ──────────────────────────────────────────────────────
+  - name: qwen2p5-1b5
+    interface: huggingface
+    parameters:
+      model: Qwen/Qwen2.5-1.5B-Instruct
+      temperature: 0.7
+      max_new_tokens: 512
+      device: auto
+    roles: [student]
+    role_parameters:
+      student:
+        temperature: 0.3
+        max_new_tokens: 16
+
+  # ── 3B: teacher-only — creates the phishing emails with correct labels ───────
+  - name: qwen2p5-3b
+    interface: huggingface
+    parameters:
+      model: Qwen/Qwen2.5-3B-Instruct
+      temperature: 0.8
+      max_new_tokens: 512
+      device: auto
+    roles: [teacher]
+
+  # ── Metric judge: exact_match — no LLM calls, no API key ────────────────────
+  - name: exact-match
+    interface: metric
+    parameters:
+      metric: exact_match
+    roles: [judge]
+
+
+tasks:
+  - name: phishing_detection
+    description: >
+      Classify an email as Phishing, Suspicious, or Legitimate
+      based on its content and characteristics.
+    output_description: >
+      A single word — one of: Phishing, Suspicious, or Legitimate. No other text.
+
+    target_attributes:
+      label:        [Phishing, Suspicious, Legitimate]
+      sender_type:  [bank, unknown]
+      quality:      [professional, typos]
+
+    nuanced_attributes:
+      tone:    [threatening, friendly]
+      context: [account_issue, prize_winner]
+
+    sampling:
+      target: [1, 1]
+      nuance: [1, 1]
+      total: 4
+
+    rubric:
+      classification:
+        metric: exact_match
+        description: >
+          The student correctly classified the email as
+          Phishing, Suspicious, or Legitimate.
+
+    evaluation_mode: single
+
+    prompt_library:
+      sample: |
+        Generate a benchmark data point for email phishing detection.
+        Task: {task_description}
+        Response format: {output_description}
+        Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+        Follow this example format exactly:
+        {{"prompt": "Dear valued customer, your account has been suspended due to unusual activity. Click here to restore access: http://secure-banklogin.xyz/verify",
+          "response": "Phishing"}}
+
+        Now generate a NEW, different email that matches the required attributes.
+        Return only a JSON object with keys "prompt" and "response". No explanation.
+
+
+experiment:
+  id: "cybersecurity-phishing-v4"
+  storage_folder: "./eval_runs"
+  log_level: INFO

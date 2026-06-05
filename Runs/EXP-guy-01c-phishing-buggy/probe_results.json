@@ -1,0 +1,18 @@
+{
+  "mode": "full",
+  "on_fail": "abort",
+  "results": {
+    "gpt-oss-20b-teacher": "ok",
+    "lfm-1.2b": "ok",
+    "nemotron-9b": "ok",
+    "glm-4.5-air": "ok",
+    "exact-match": "ok"
+  },
+  "probed_models": [
+    "exact-match",
+    "glm-4.5-air",
+    "gpt-oss-20b-teacher",
+    "lfm-1.2b",
+    "nemotron-9b"
+  ]
+}

@@ -1,0 +1,96 @@
+experiment:
+  id: EXP-guy-01c-phishing-buggy
+  log_level: INFO
+  storage_folder: ./Runs
+models:
+- interface: openrouter
+  name: gpt-oss-20b-teacher
+  parameters:
+    max_tokens: 512
+    model: openai/gpt-oss-20b:free
+    temperature: 0.8
+  roles:
+  - teacher
+- interface: openrouter
+  name: lfm-1.2b
+  parameters:
+    max_tokens: 16
+    model: liquid/lfm-2.5-1.2b-instruct:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: nemotron-9b
+  parameters:
+    max_tokens: 16
+    model: nvidia/nemotron-nano-9b-v2:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: glm-4.5-air
+  parameters:
+    max_tokens: 16
+    model: z-ai/glm-4.5-air:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: metric
+  name: exact-match
+  parameters:
+    metric: exact_match
+  roles:
+  - judge
+tasks:
+- description: 'Classify an email as Phishing, Suspicious, or Legitimate based on
+    its content and characteristics.
+
+    '
+  evaluation_mode: single
+  name: phishing_detection
+  nuanced_attributes:
+    context:
+    - account_issue
+    - prize_winner
+    tone:
+    - threatening
+    - friendly
+  output_description: 'A single word -- one of: Phishing, Suspicious, or Legitimate.
+    No other text.
+
+    '
+  prompt_library:
+    sample: "Generate a benchmark data point for email phishing detection.\nTask:\
+      \ {task_description}\nResponse format: {output_description}\nRequired attributes:\
+      \ {target_attributes}. Nuance: {nuanced_attributes}.\n\nFollow this example\
+      \ format exactly:\n{{\"prompt\": \"Dear valued customer, your account has been\
+      \ suspended due to unusual activity. Click here to restore access: http://secure-banklogin.xyz/verify\"\
+      ,\n  \"response\": \"Phishing\"}}\n\nNow generate a NEW, different email that\
+      \ matches the required attributes.\nReturn only a JSON object with keys \"prompt\"\
+      \ and \"response\". No explanation.\n"
+  rubric:
+    classification:
+      description: 'The student correctly classified the email as Phishing, Suspicious,
+        or Legitimate.
+
+        '
+      metric: exact_match
+  sampling:
+    nuance:
+    - 1
+    - 1
+    target:
+    - 1
+    - 1
+    total: 4
+  target_attributes:
+    label:
+    - Phishing
+    - Suspicious
+    - Legitimate
+    quality:
+    - professional
+    - typos
+    sender_type:
+    - bank
+    - unknown

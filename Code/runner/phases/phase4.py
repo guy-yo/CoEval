@@ -1,6 +1,7 @@
 """Phase 4 — Response Collection (REQ-7.1, §4, §6.2.5)."""
 from __future__ import annotations
 
+import os
 from collections import defaultdict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
@@ -14,8 +15,9 @@ from ..prompts import get_prompt
 from ..storage import ExperimentStorage
 from .utils import QuotaTracker
 
-# Maximum concurrent workers for non-batch, network-bound student calls
-_MAX_WORKERS = 10
+# Maximum concurrent workers for non-batch, network-bound student calls.
+# Override with COEVAL_MAX_WORKERS (set to 1-3 for rate-limited free-tier models).
+_MAX_WORKERS = int(os.environ.get('COEVAL_MAX_WORKERS', '10'))
 # Separator for batch keys — ASCII NUL never appears in task/model/datapoint IDs
 _KEY_SEP = "\x00"
 

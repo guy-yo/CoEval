@@ -1,0 +1,112 @@
+# =============================================================================
+# CoEval -- Cybersecurity / Phishing Detection
+# RUN A: reproduce the DIVERSITY / SAMPLING bug  (sampling.target = [1, 1])
+# =============================================================================
+# Domain : cybersecurity      Task: phishing email classification
+# Teacher: generates email descriptions with controlled attributes
+# Students: classify each email as Phishing / Suspicious / Legitimate
+# Judge  : exact_match (metric -- deterministic, no LLM bias)
+#
+# Purpose of this run: with sampling.target = [1, 1] the pipeline samples only
+# ONE of the three target attributes per datapoint (phase3.py:236 falls to the
+# _sample_attrs branch). The `label` ground-truth is therefore OMITTED on ~2/3
+# of items, and the 3x2x2 = 12 combination space is NOT covered -> low diversity.
+# This config captures the "before" state for the report.
+#
+# All models via OpenRouter.  ~12 teacher + 5x12 student = ~72 cheap calls.
+# =============================================================================
+
+models:
+
+  # ---- TEACHER: FREE model that stayed responsive in run 1 (good JSON) ------
+  - name: gpt-oss-20b-teacher
+    interface: openrouter
+    parameters:
+      model: openai/gpt-oss-20b:free
+      temperature: 0.8
+      max_tokens: 512
+    roles: [teacher]
+
+  # ---- STUDENTS: free models that responded fast in run 1 (no 429) ---------
+  - name: lfm-1.2b
+    interface: openrouter
+    parameters:
+      model: liquid/lfm-2.5-1.2b-instruct:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: nemotron-9b
+    interface: openrouter
+    parameters:
+      model: nvidia/nemotron-nano-9b-v2:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: glm-4.5-air
+    interface: openrouter
+    parameters:
+      model: z-ai/glm-4.5-air:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  # ---- JUDGE: deterministic metric, 0 LLM calls, no API key ----------------
+  - name: exact-match
+    interface: metric
+    parameters:
+      metric: exact_match
+    roles: [judge]
+
+
+tasks:
+  - name: phishing_detection
+    description: >
+      Classify an email as Phishing, Suspicious, or Legitimate
+      based on its content and characteristics.
+    output_description: >
+      A single word -- one of: Phishing, Suspicious, or Legitimate. No other text.
+
+    target_attributes:
+      label:        [Phishing, Suspicious, Legitimate]
+      sender_type:  [bank, unknown]
+      quality:      [professional, typos]
+
+    nuanced_attributes:
+      tone:    [threatening, friendly]
+      context: [account_issue, prize_winner]
+
+    sampling:
+      target: [1, 1]      # <-- BUG: samples only 1 of 3 target attrs per item
+      nuance: [1, 1]
+      total: 4
+
+    rubric:
+      classification:
+        metric: exact_match
+        description: >
+          The student correctly classified the email as
+          Phishing, Suspicious, or Legitimate.
+
+    evaluation_mode: single
+
+    prompt_library:
+      sample: |
+        Generate a benchmark data point for email phishing detection.
+        Task: {task_description}
+        Response format: {output_description}
+        Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+        Follow this example format exactly:
+        {{"prompt": "Dear valued customer, your account has been suspended due to unusual activity. Click here to restore access: http://secure-banklogin.xyz/verify",
+          "response": "Phishing"}}
+
+        Now generate a NEW, different email that matches the required attributes.
+        Return only a JSON object with keys "prompt" and "response". No explanation.
+
+
+experiment:
+  id: "EXP-guy-01c-phishing-buggy"
+  storage_folder: "./Runs"
+  log_level: INFO

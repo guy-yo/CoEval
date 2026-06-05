@@ -213,6 +213,9 @@ def _probe_one(model: 'ModelConfig', provider_keys: dict) -> None:
     if iface == 'benchmark':
         # Virtual interface — no API to probe; data pre-ingested by `coeval ingest`
         return
+    if iface == 'metric':
+        # Virtual interface — deterministic metric judge, no model weights or API
+        return
     if iface == 'openai':
         _probe_openai(model, provider_keys)
     elif iface == 'anthropic':
