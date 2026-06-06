@@ -4,7 +4,7 @@
 > build a custom **phishing-detection** evaluation benchmark, rank several LLMs on it,
 > and **find and fix a benchmark-generation diversity bug**.
 >
-> ### 👉 **[Read my full project report: REPORT.md](REPORT.md)**
+> ### 👉 **[Full project report: REPORT.md](REPORT.md)** · **[Results of all runs: EXPERIMENTS.md](EXPERIMENTS.md)**
 >
 > **Summary of my work:** I traced low benchmark diversity to a sampling bug in
 > `phase3.py` (the full-coverage path runs only when `sampling.target == 'all'`, otherwise

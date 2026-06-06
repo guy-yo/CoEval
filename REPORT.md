@@ -139,7 +139,43 @@ The diversity bug is fully resolved: the benchmark is now balanced, fully labele
 
 ---
 
-## 6. Fix log (changelog of my changes)
+## 6. Second finding — the generated content does not match its label
+
+Fixing the sampler fixed *coverage* (every label is now represented). But a blind
+read of the 12 generated emails from `EXP-guy-03` reveals a **second, deeper
+benchmark-generation problem**: the email *content* does not reflect its assigned
+label. A careful human reader classifies essentially **all 12 emails as Phishing**,
+regardless of whether the teacher labeled them Phishing, Suspicious, or Legitimate.
+
+Examples where the gold label is simply wrong on its face:
+
+| # | Gold label | Email content | Honest read |
+|---|------------|---------------|-------------|
+| 7, 8 | Suspicious | "Congratulations! claim your $5,000 gift card … submit your bank details" | Phishing (prize scam) |
+| 9 | **Legitimate** | "account suspended … verify within 24 hours or permanent closure: https://secure.bankoftrust.com/verify" | **Phishing** (textbook) |
+| 11 | **Legitimate** | "Congratulations! winner of our contest … claim your $5,000 gift card" | Phishing (prize scam) |
+
+**Why this happens:** the teacher is given the class as just one attribute among
+several, plus a single in-prompt example that is itself **Phishing**
+(`prompt_library.sample` shows only `{"response": "Phishing"}`). The teacher anchors
+on that exemplar and writes phishing-style content (urgency, fake verify links,
+prize bait) no matter which label it was asked for. So the "Suspicious" and
+"Legitimate" items are indistinguishable from the "Phishing" ones.
+
+**Consequence for the evaluation:** the students that answered "Phishing" to
+everything are arguably **more correct than the gold labels** on items 5–9 and 11.
+Their ~0.33 accuracy therefore reflects **unreliable ground truth**, not only model
+weakness. This is the assignment's core distinction in its sharpest form: the
+failure is in **benchmark generation**, not in the students.
+
+**Recommended fix (not yet run — budget):** give the teacher a short *per-class*
+specification and one example *per* label (what makes an email Suspicious vs
+Legitimate vs Phishing), instead of a single Phishing exemplar, so the content
+actually varies with the label.
+
+---
+
+## 7. Fix log (changelog of my changes)
 
 | # | File | Change | Why |
 |---|---|---|---|
@@ -150,14 +186,14 @@ The diversity bug is fully resolved: the benchmark is now balanced, fully labele
 
 ---
 
-## 7. Limitations and honest notes
+## 8. Limitations and honest notes
 
 - **Free-tier rate limits dominated the engineering effort.** OpenRouter `:free` endpoints share an upstream pool. The popular `meta-llama/llama-3.3-70b-instruct:free` was so saturated that a teacher run there failed 7/8 items; switching the teacher to the responsive `openai/gpt-oss-20b:free` fixed it. There is also a hard **50 free requests/day** account cap, which truncated the student phase of the fixed run. None of this affects the headline result, which lives entirely in Phase-3 generation.
 - **The student ranking is a confound, not a capability measure.** Two of the three students (`nemotron-9b`, `glm-4.5-air`) are *reasoning* models; at `max_tokens: 16` they emit chain-of-thought ("Hmm, the user has given me…") instead of a bare label, and `exact_match` (which requires full string equality, `metric_judge.py:136`) scores that 0. This is a student-side evaluation artifact, **not** the benchmark-generation bug, and per the assignment's framing the focus stayed on generation.
 
 ---
 
-## 8. How to reproduce
+## 9. How to reproduce
 
 ```bash
 # 1. Put an OpenRouter key in keys.yaml (git-ignored):
