@@ -1,0 +1,107 @@
+# =============================================================================
+# CoEval -- Phishing Detection -- RUN 03: real model ranking on the FIXED bench
+# =============================================================================
+# Uses the fixed sampler (target: all -> all 12 balanced combos) and a set of
+# NON-reasoning instruct students that emit a bare label, so exact_match gives a
+# meaningful ranking (unlike runs 01c/02 where reasoning students scored 0).
+#
+# Budget: probe disabled, 12 generation + 3 x 12 student = 48 calls (< 50/day).
+# Run:  COEVAL_MAX_WORKERS=2 python -m runner.cli run --config Runs/_guy_configs/03_ranking.yaml
+# =============================================================================
+
+models:
+
+  # ---- TEACHER: proven-reliable free model ---------------------------------
+  - name: gpt-oss-20b-teacher
+    interface: openrouter
+    parameters:
+      model: openai/gpt-oss-20b:free
+      temperature: 0.8
+      max_tokens: 512
+    roles: [teacher]
+
+  # ---- STUDENTS: non-reasoning instruct models (emit one word) -------------
+  - name: lfm-1.2b
+    interface: openrouter
+    parameters:
+      model: liquid/lfm-2.5-1.2b-instruct:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: gemma-4-26b
+    interface: openrouter
+    parameters:
+      model: google/gemma-4-26b-a4b-it:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: gpt-oss-120b
+    interface: openrouter
+    parameters:
+      model: openai/gpt-oss-120b:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  # ---- JUDGE: deterministic metric, 0 LLM calls ----------------------------
+  - name: exact-match
+    interface: metric
+    parameters:
+      metric: exact_match
+    roles: [judge]
+
+
+tasks:
+  - name: phishing_detection
+    description: >
+      Classify an email as Phishing, Suspicious, or Legitimate
+      based on its content and characteristics.
+    output_description: >
+      A single word -- one of: Phishing, Suspicious, or Legitimate. No other text.
+
+    target_attributes:
+      label:        [Phishing, Suspicious, Legitimate]
+      sender_type:  [bank, unknown]
+      quality:      [professional, typos]
+
+    nuanced_attributes:
+      tone:    [threatening, friendly]
+      context: [account_issue, prize_winner]
+
+    sampling:
+      target: all         # fixed sampler: full coverage of all 12 combos
+      nuance: [1, 1]
+      total: 12
+
+    rubric:
+      classification:
+        metric: exact_match
+        description: >
+          The student correctly classified the email as
+          Phishing, Suspicious, or Legitimate.
+
+    evaluation_mode: single
+
+    prompt_library:
+      sample: |
+        Generate a benchmark data point for email phishing detection.
+        Task: {task_description}
+        Response format: {output_description}
+        Required attributes: {target_attributes}. Nuance: {nuanced_attributes}.
+
+        Follow this example format exactly:
+        {{"prompt": "Dear valued customer, your account has been suspended due to unusual activity. Click here to restore access: http://secure-banklogin.xyz/verify",
+          "response": "Phishing"}}
+
+        Now generate a NEW, different email that matches the required attributes.
+        Return only a JSON object with keys "prompt" and "response". No explanation.
+
+
+experiment:
+  id: "EXP-guy-03-ranking"
+  storage_folder: "./Runs"
+  log_level: INFO
+  probe_mode: disable       # save the ~4 probe calls from the daily budget
+  generation_retries: 1     # limit wasted calls on rate-limited models
