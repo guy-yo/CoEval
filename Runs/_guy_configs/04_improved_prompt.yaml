@@ -1,0 +1,126 @@
+# =============================================================================
+# CoEval -- Phishing Detection -- RUN 04: IMPROVED TEACHER PROMPT
+# =============================================================================
+# Addresses finding #2 (content does not match label). Changes vs run 03 are
+# PURELY in the YAML prompt (no code change):
+#   1. The class label is the PRIMARY instruction, not just one attribute.
+#   2. A definition of each class (Phishing / Suspicious / Legitimate).
+#   3. One example PER class (run 03 had only a single Phishing example).
+#   4. Neutral nuanced attributes (the old prize_winner/threatening pulled every
+#      email toward a scam, conflicting with the Legitimate class).
+#
+# Goal: a blind reader should now be able to tell the classes apart, and the
+# Legitimate / Suspicious emails should stop looking like Phishing.
+# =============================================================================
+
+models:
+  - name: gpt-oss-20b-teacher
+    interface: openrouter
+    parameters:
+      model: openai/gpt-oss-20b:free
+      temperature: 0.8
+      max_tokens: 512
+    roles: [teacher]
+
+  - name: lfm-1.2b
+    interface: openrouter
+    parameters:
+      model: liquid/lfm-2.5-1.2b-instruct:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: gemma-4-26b
+    interface: openrouter
+    parameters:
+      model: google/gemma-4-26b-a4b-it:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: gpt-oss-120b
+    interface: openrouter
+    parameters:
+      model: openai/gpt-oss-120b:free
+      temperature: 0.3
+      max_tokens: 16
+    roles: [student]
+
+  - name: exact-match
+    interface: metric
+    parameters:
+      metric: exact_match
+    roles: [judge]
+
+
+tasks:
+  - name: phishing_detection
+    description: >
+      Classify an email as Phishing, Suspicious, or Legitimate
+      based on its content and characteristics.
+    output_description: >
+      A single word -- one of: Phishing, Suspicious, or Legitimate. No other text.
+
+    target_attributes:
+      label:        [Phishing, Suspicious, Legitimate]
+      sender_type:  [bank, unknown]
+      quality:      [professional, typos]
+
+    # Neutral nuances that do NOT force a scam (the old prize_winner/threatening
+    # made even "Legitimate" emails look like phishing).
+    nuanced_attributes:
+      tone:    [formal, friendly]
+      context: [order_confirmation, account_update]
+
+    sampling:
+      target: all
+      nuance: [1, 1]
+      total: 12
+
+    rubric:
+      classification:
+        metric: exact_match
+        description: >
+          The student correctly classified the email as
+          Phishing, Suspicious, or Legitimate.
+
+    evaluation_mode: single
+
+    prompt_library:
+      sample: |
+        You are generating ONE labeled email for a phishing-detection benchmark.
+        The email's CONTENT must genuinely match the target class given below.
+
+        Required attributes (write an email of the `label` class): {target_attributes}
+
+        Class definitions -- make the content unmistakably fit the assigned class:
+          - "Phishing": a clearly malicious email. Fake or look-alike links, requests
+            for passwords or bank details, threats or false urgency, spoofed sender.
+            A reader should be able to tell it is an attack.
+          - "Suspicious": ambiguous. A few mild red flags (generic greeting, a vague
+            unexpected request, an odd attachment) but nothing clearly malicious. A
+            cautious reader would be unsure either way.
+          - "Legitimate": a genuine, harmless email a real company actually sends.
+            NO "verify your account" links, NO password or credential requests, NO
+            threats or urgency. e.g. an order receipt, a statement-ready notice, an
+            appointment reminder, a shipping update, a newsletter.
+
+        One example per class (write something NEW, do not copy these):
+          - Phishing: {{"prompt": "URGENT: your account is locked. Verify within 24h or it is deleted: http://secure-login-verify.xyz", "response": "Phishing"}}
+          - Suspicious: {{"prompt": "Hi, please review the attached invoice and confirm the payment details when you get a chance.", "response": "Suspicious"}}
+          - Legitimate: {{"prompt": "Hi Dana, thanks for your order #4821. Your receipt is attached, no action needed. - The Acme Team", "response": "Legitimate"}}
+
+        Task: {task_description}
+        Response format for the email's label: {output_description}
+        Apply these style hints lightly, they must NOT change the class: {nuanced_attributes}
+
+        Now write a NEW email whose content genuinely matches the `label` class above.
+        Return only a JSON object: {{"prompt": "<the email text>", "response": "<the class label>"}}.
+
+
+experiment:
+  id: "EXP-guy-04-improved-prompt"
+  storage_folder: "./Runs"
+  log_level: INFO
+  probe_mode: disable
+  generation_retries: 1

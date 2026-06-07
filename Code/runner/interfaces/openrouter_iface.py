@@ -57,6 +57,9 @@ from .base import ModelInterface
 _BASE_URL = "https://openrouter.ai/api/v1"
 _TRANSIENT_SIGNALS = ('rate limit', 'rate-limited', 'timeout', 'connection', '429', '502', '503', '504', '529')
 _RATE_LIMIT_SIGNALS = ('rate limit', 'rate-limited', '429')
+# A daily/free-tier quota cap will not clear for hours, so retrying is pointless
+# (and slow). Treat it like a fatal error: fail fast instead of grinding.
+_DAILY_CAP_SIGNALS = ('per-day', 'per day', 'free-models-per-day', 'daily limit')
 _FATAL_SIGNALS = ('invalid api key', 'authentication', 'model not found', 'does not exist')
 
 # Free-tier (`:free`) models share an upstream pool that returns HTTP 429
@@ -147,6 +150,9 @@ class OpenRouterInterface(ModelInterface):
             except Exception as exc:
                 err_lower = str(exc).lower()
                 if any(sig in err_lower for sig in _FATAL_SIGNALS):
+                    raise
+                if any(sig in err_lower for sig in _DAILY_CAP_SIGNALS):
+                    # daily free quota exhausted -- retrying won't help for hours
                     raise
                 last_err = exc
                 if attempt < _MAX_ATTEMPTS - 1:

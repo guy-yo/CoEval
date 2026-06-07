@@ -21,6 +21,7 @@ The narrative analysis (root cause, fix, before/after) is in
 | `EXP-guy-01c-phishing-buggy` | `target: [1,1]`, total 4 | **BEFORE** — reproduce the bug | completed | 4 | **0** | 4 |
 | `EXP-guy-02-phishing-fixed`  | `target: all`, total 12 | **AFTER** — the fix | failed³ | 12 | **12** | **12** |
 | `EXP-guy-03-ranking`         | `target: all`, total 12 | Model ranking (clean students) | completed | 12 | **12** | **12** |
+| `EXP-guy-04-improved-prompt` | `target: all`, total 12 | **Improved teacher prompt** (finding #2 fix) | completed | 12 | **12** | **12** |
 
 ¹ Free-tier 429 storm on `llama-3.3-70b:free` teacher — 7/8 datapoints skipped.
 ² `llama-3.3-70b:free` persistently rate-limited upstream; killed and switched teacher to `gpt-oss-20b:free`.
@@ -99,8 +100,29 @@ and even two "Legitimate" items are textbook phishing:
 *Phishing*, so it writes phishing-style content for every label. The students that
 answered "Phishing" to everything are arguably **more correct than the gold labels**
 on items 5–9 and 11 — so the ~0.33 accuracy partly reflects **bad ground truth**,
-not model weakness. Recommended next experiment: per-class examples in the teacher
-prompt so content actually varies with the label. (See [REPORT.md §6](REPORT.md).)
+not model weakness. (See [REPORT.md §6](REPORT.md).)
+
+### Fixing finding #2 worked — and proves the point (`EXP-guy-04`)
+
+The fix is a **YAML-only prompt change**: the class label becomes the primary
+instruction, each class is defined, one example is given *per* class (not just a
+Phishing one), and the scam-flavoured nuances are replaced with neutral ones.
+
+Now the generated content matches the labels (Legitimate = real statements /
+receipts with no links; Suspicious = mild red flags only), and **student
+accuracy roughly doubled** on the same balanced 4/4/4 benchmark:
+
+| Student | Run 03 (old prompt) | Run 04 (fixed prompt) | Answer mix (Run 04) |
+|---------|--------------------:|----------------------:|---------------------|
+| `gemma-4-26b`  | 0.42 | **0.83** | P 6 / S 2 / L 4 |
+| `gpt-oss-120b` | 0.33 | **0.67** | P 8 / S 0 / L 4 |
+| `lfm-1.2b`     | 0.33 | **0.67** | P 6 / S 0 / L 6 |
+
+**Takeaway:** the models were not as weak as Run 03 implied — the ground truth was
+broken. Fixing benchmark generation roughly doubled accuracy. The only class still
+missed is "Suspicious" (the two larger models never predict it), which is now a
+**genuine model limitation** on a correct benchmark — exactly the failure type the
+assignment treats as acceptable.
 
 ---
 

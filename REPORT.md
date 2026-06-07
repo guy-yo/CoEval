@@ -168,10 +168,30 @@ Their ~0.33 accuracy therefore reflects **unreliable ground truth**, not only mo
 weakness. This is the assignment's core distinction in its sharpest form: the
 failure is in **benchmark generation**, not in the students.
 
-**Recommended fix (not yet run — budget):** give the teacher a short *per-class*
-specification and one example *per* label (what makes an email Suspicious vs
-Legitimate vs Phishing), instead of a single Phishing exemplar, so the content
-actually varies with the label.
+**The fix (applied in `EXP-guy-04`, a YAML-only prompt change):** rewrite
+`prompt_library.sample` to (a) make the class label the primary instruction,
+(b) define each class, (c) give one example *per* label instead of a single
+Phishing exemplar, and (d) replace the scam-flavoured nuances
+(`prize_winner` / `threatening`) with neutral ones (`order_confirmation` /
+`account_update`). No code change is needed — the prompt lives entirely in the
+task YAML.
+
+**Result — the fix works, and it proves the point.** With label-matching content,
+a blind reader can now tell the classes apart (Legitimate items are real
+statements / receipts with no links; Suspicious items have mild red flags only),
+and **student accuracy roughly doubled**:
+
+| Student | Run 03 (old prompt) | Run 04 (fixed prompt) |
+|---------|--------------------:|----------------------:|
+| `gemma-4-26b`  | 0.42 | **0.83** |
+| `gpt-oss-120b` | 0.33 (all-Phishing) | **0.67** |
+| `lfm-1.2b`     | 0.33 | **0.67** |
+
+The models were never as weak as Run 03 suggested: the ground truth was broken.
+Once generation is correct, the same models score far higher, confirming the low
+Run 03 scores were a **benchmark-generation** failure, not model weakness. (The
+one genuinely hard class that remains is "Suspicious" — that residual is real
+model limitation on a now-correct benchmark.)
 
 ---
 
