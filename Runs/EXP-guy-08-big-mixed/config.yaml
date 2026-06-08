@@ -1,0 +1,137 @@
+experiment:
+  generation_retries: 1
+  id: EXP-guy-08-big-mixed
+  log_level: INFO
+  probe_mode: disable
+  storage_folder: ./Runs
+models:
+- interface: openrouter
+  name: gpt-oss-120b-teacher
+  parameters:
+    max_tokens: 512
+    model: openai/gpt-oss-120b:free
+    temperature: 0.8
+  roles:
+  - teacher
+- interface: openrouter
+  name: lfm-1.2b
+  parameters:
+    max_tokens: 16
+    model: liquid/lfm-2.5-1.2b-instruct:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: gpt-oss-20b
+  parameters:
+    max_tokens: 16
+    model: openai/gpt-oss-20b:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: gemma-4-26b
+  parameters:
+    max_tokens: 16
+    model: google/gemma-4-26b-a4b-it:free
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: gpt-4o-mini
+  parameters:
+    max_tokens: 16
+    model: openai/gpt-4o-mini
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: gemini-flash-lite
+  parameters:
+    max_tokens: 16
+    model: google/gemini-2.5-flash-lite
+    temperature: 0.3
+  roles:
+  - student
+- interface: openrouter
+  name: claude-haiku-3.5
+  parameters:
+    max_tokens: 16
+    model: anthropic/claude-3.5-haiku
+    temperature: 0.3
+  roles:
+  - student
+- interface: metric
+  name: exact-match
+  parameters:
+    metric: exact_match
+  roles:
+  - judge
+tasks:
+- description: 'Classify an email as Phishing, Suspicious, or Legitimate based on
+    its content and characteristics.
+
+    '
+  evaluation_mode: single
+  name: phishing_detection
+  nuanced_attributes:
+    context:
+    - order_confirmation
+    - account_update
+    tone:
+    - formal
+    - friendly
+  output_description: 'A single word -- one of: Phishing, Suspicious, or Legitimate.
+    No other text.
+
+    '
+  prompt_library:
+    sample: "You are generating ONE labeled email for a phishing-detection benchmark.\n\
+      The email's CONTENT must genuinely match the target class given below.\n\nRequired\
+      \ attributes (write an email of the `label` class): {target_attributes}\n\n\
+      Class definitions -- make the content unmistakably fit the assigned class:\n\
+      \  - \"Phishing\": a clearly malicious email. Fake or look-alike links, requests\n\
+      \    for passwords or bank details, threats or false urgency, spoofed sender.\n\
+      \    A reader should be able to tell it is an attack.\n  - \"Suspicious\": ambiguous.\
+      \ A few mild red flags (generic greeting, a vague\n    unexpected request, an\
+      \ odd attachment) but nothing clearly malicious. A\n    cautious reader would\
+      \ be unsure either way.\n  - \"Legitimate\": a genuine, harmless email a real\
+      \ company actually sends.\n    NO \"verify your account\" links, NO password\
+      \ or credential requests, NO\n    threats or urgency. e.g. an order receipt,\
+      \ a statement-ready notice, an\n    appointment reminder, a shipping update,\
+      \ a newsletter.\n\nOne example per class (write something NEW, do not copy these):\n\
+      \  - Phishing: {{\"prompt\": \"URGENT: your account is locked. Verify within\
+      \ 24h or it is deleted: http://secure-login-verify.xyz\", \"response\": \"Phishing\"\
+      }}\n  - Suspicious: {{\"prompt\": \"Hi, please review the attached invoice and\
+      \ confirm the payment details when you get a chance.\", \"response\": \"Suspicious\"\
+      }}\n  - Legitimate: {{\"prompt\": \"Hi Dana, thanks for your order #4821. Your\
+      \ receipt is attached, no action needed. - The Acme Team\", \"response\": \"\
+      Legitimate\"}}\n\nTask: {task_description}\nResponse format for the email's\
+      \ label: {output_description}\nApply these style hints lightly, they must NOT\
+      \ change the class: {nuanced_attributes}\n\nNow write a NEW email whose content\
+      \ genuinely matches the `label` class above.\nReturn only a JSON object: {{\"\
+      prompt\": \"<the email text>\", \"response\": \"<the class label>\"}}.\n"
+  rubric:
+    classification:
+      description: 'The student correctly classified the email as Phishing, Suspicious,
+        or Legitimate.
+
+        '
+      metric: exact_match
+  sampling:
+    nuance:
+    - 1
+    - 1
+    target: all
+    total: 24
+  target_attributes:
+    label:
+    - Phishing
+    - Suspicious
+    - Legitimate
+    quality:
+    - professional
+    - typos
+    sender_type:
+    - bank
+    - unknown

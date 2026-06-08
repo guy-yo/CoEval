@@ -23,6 +23,7 @@ The narrative analysis (root cause, fix, before/after) is in
 | `EXP-guy-03-ranking`         | `target: all`, total 12 | Model ranking (clean students) | completed | 12 | **12** | **12** |
 | `EXP-guy-04-improved-prompt` | `target: all`, total 12 | **Improved teacher prompt** (finding #2 fix) | completed | 12 | **12** | **12** |
 | `EXP-guy-07-proper-free`     | `target: all`, total 12 | Broader 4-model free ranking | completed | 12 | **12** | **12** |
+| `EXP-guy-08-big-mixed`       | `target: all`, total 24 | **Stable ranking, free + paid frontier** | completed | 24 | **24** | **24** |
 
 ¹ Free-tier 429 storm on `llama-3.3-70b:free` teacher — 7/8 datapoints skipped.
 ² `llama-3.3-70b:free` persistently rate-limited upstream; killed and switched teacher to `gpt-oss-20b:free`.
@@ -149,6 +150,34 @@ Four reliable free students (1.2B → 31B) on a fresh balanced benchmark:
    the daily free cap rose to 1000/day after the account added credit). The
    trustworthy takeaway from these runs is the **per-class pattern**, not the exact
    order within the 0.58–0.67 cluster.
+
+### Bigger, stable ranking: free vs paid frontier (`EXP-guy-08`)
+
+24 items (8 per class) for stability; six students, three reliable free + three
+cheap paid frontier models. **Actual cost: USD 0.0057** (free daily cap is 1000/day).
+
+| Rank | Student | Tier | Accuracy | Phishing | Suspicious | Legitimate |
+|-----:|---------|------|---------:|---------:|-----------:|-----------:|
+| 1 | `gemini-2.5-flash-lite` | paid | **0.88** (21/24) | 8/8 | **5/8** | 8/8 |
+| 2 | `gpt-4o-mini`   | paid | 0.79 (19/24) | 8/8 | 3/8 | 8/8 |
+| 2 | `gemma-4-26b`   | free | 0.79 (19/24) | 8/8 | 3/8 | 8/8 |
+| 4 | `gpt-oss-20b`   | free | 0.71 (17/24) | 8/8 | 1/8 | 8/8 |
+| 5 | `lfm-1.2b`      | free | 0.67 (16/24) | 8/8 | 0/8 | 8/8 |
+| 5 | `claude-3.5-haiku` | paid | 0.67 (16/24) | 8/8 | 0/8 | 8/8 |
+
+**Findings (now stable, 24 items):**
+
+1. **Every model solves Phishing (8/8) and Legitimate (8/8).** The benchmark's clear
+   classes are a sanity floor that all models pass — confirming the items are
+   well-formed — so **the entire ranking is decided by the "Suspicious" class.**
+2. **`gemini-2.5-flash-lite` wins (0.88)** — the only model that handles the
+   ambiguous Suspicious class reasonably (5/8).
+3. **Bigger / paid is not automatically better.** `claude-3.5-haiku` (paid frontier)
+   landed **last** (0/8 Suspicious), tied with the tiny free `lfm-1.2b`; and the
+   **free** `gemma-4-26b` matched paid `gpt-4o-mini`. Capability on *this* task is
+   not predicted by price or size.
+4. Going from 12 → 24 items removed the earlier ranking noise: Legitimate is now a
+   clean 8/8 for everyone, and the Suspicious gradient (5/3/3/1/0/0) is crisp.
 
 ---
 

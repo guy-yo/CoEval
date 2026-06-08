@@ -1,0 +1,1 @@
+{"experiment_id": "EXP-guy-08-big-mixed", "status": "completed", "created_at": "2026-06-08T17:39:47Z", "updated_at": "2026-06-08T17:50:03Z", "phases_completed": ["attribute_mapping", "rubric_mapping", "data_generation", "response_collection", "evaluation"], "phases_in_progress": [], "resume_from": null}
