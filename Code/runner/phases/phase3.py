@@ -233,12 +233,9 @@ def _generate_batch_datapoints(
 
             # Aligned with paper v2 methodology - Algorithm 1 (§3.5): use
             # stratified cycling for target attributes when spec is 'all'.
-            if task.sampling.target == 'all' and target_attrs:
-                target_sequence = _make_target_cycle(
-                    target_attrs, to_generate, logger=logger, label=label
-                )
-            else:
-                target_sequence = None
+            target_sequence = _build_target_sequence(
+                task, target_attrs, to_generate, logger=logger, label=label
+            )
 
             for i in range(to_generate):
                 if quota.is_exhausted(teacher_id):
@@ -401,14 +398,11 @@ def _generate_datapoints(
 
     # Aligned with paper v2 methodology - Algorithm 1 (§3.5): pre-build the
     # ordered sequence of target-attribute assignments using stratified cycling.
-    # When target_spec == 'all', use full Cartesian cycling; otherwise fall back
-    # to per-item random sampling for non-exhaustive target specs.
-    if task.sampling.target == 'all' and target_attrs:
-        target_sequence = _make_target_cycle(
-            target_attrs, to_generate, logger=logger, label=label
-        )
-    else:
-        target_sequence = None  # use per-item _sample_attrs below
+    # Target attributes are always fully assigned with maximal combination
+    # coverage (see _build_target_sequence); _sample_attrs is for nuanced attrs.
+    target_sequence = _build_target_sequence(
+        task, target_attrs, to_generate, logger=logger, label=label
+    )
 
     iface = pool.get(teacher)
     params = teacher.get_parameters_for_role('teacher')
@@ -549,6 +543,41 @@ def _make_target_cycle(
         # N >= |perms|: use circular iterator (Algorithm 1, line 4)
         cycle_iter = itertools.cycle(all_perms)
         return [dict(zip(keys, next(cycle_iter))) for _ in range(total)]
+
+
+def _build_target_sequence(
+    task,
+    target_attrs: dict[str, list],
+    total: int,
+    logger: 'RunLogger | None' = None,
+    label: str = '',
+) -> 'list[dict[str, str]] | None':
+    """Build the per-datapoint target-attribute assignments (or None if there
+    are no target attributes).
+
+    Target attributes define the *structured ground truth* of each benchmark
+    item (the class label and the controlled conditions), so every datapoint
+    must receive ALL of them, with maximal coverage of their combinations.
+    This therefore always routes through :func:`_make_target_cycle`.
+
+    BUG FIX (benchmark-generation diversity): previously this only happened when
+    ``sampling.target == 'all'``; any numeric spec (e.g. ``[1, 1]``) fell through
+    to :func:`_sample_attrs`, which selected a random SUBSET of target attribute
+    *names* per item. That silently dropped the ground-truth ``label`` on items
+    where it was not picked, and gave no coverage guarantee, collapsing benchmark
+    diversity. Per-attribute subsetting is intended for *nuanced* attributes only;
+    :func:`_sample_attrs` still serves those.
+    """
+    if not target_attrs:
+        return None
+    if logger is not None and task.sampling.target != 'all':
+        logger.warning(
+            f"Phase 3: {label} sampling.target={task.sampling.target!r} is numeric; "
+            "target attributes are always fully assigned for coverage (per-attribute "
+            "subsetting was removed -- it dropped the ground-truth label and reduced "
+            "diversity). Use target: all to silence this notice."
+        )
+    return _make_target_cycle(target_attrs, total, logger=logger, label=label)
 
 
 def _sample_attrs(attr_map: dict[str, list], target_spec) -> dict[str, str]:

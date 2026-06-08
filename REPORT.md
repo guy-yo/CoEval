@@ -139,7 +139,43 @@ The diversity bug is fully resolved: the benchmark is now balanced, fully labele
 
 ---
 
-## 6. Second finding — the generated content does not match its label
+## 6. Fixing the root cause in the system code (not just the config)
+
+§5 fixes the bug at the *config* level (`sampling.target: all`). But the defect
+lives in the **system code**, and a config workaround leaves the same trap in
+place for every other task and user. So I also fixed it in `phase3.py` itself.
+
+**What I saw.** With `sampling.target: [1, 1]`, generated items were missing the
+`label` ground truth ~50% of the time, and the attribute combinations were not
+covered (§4).
+
+**What I found.** In `Code/runner/phases/phase3.py`, target-attribute assignment
+used the full-coverage routine `_make_target_cycle` **only** when
+`sampling.target == 'all'`. For any numeric spec it fell through to
+`_sample_attrs`, which selects a random *subset of target attribute names* per
+item. Per-attribute subsetting is correct for *nuanced* attributes, but for
+*target* attributes it silently drops the structured ground truth (including the
+class label) and destroys diversity. The two generation paths (batch and
+streaming) both had this branch.
+
+**What I fixed.** I routed all target-attribute assignment through a new helper
+`_build_target_sequence`, which always uses `_make_target_cycle` (full
+combination coverage) for target attributes regardless of the spec, and logs a
+clear warning when a legacy numeric `sampling.target` is encountered.
+`_sample_attrs` now serves nuanced attributes only. Both call sites updated.
+
+**How I verified.**
+- *Regression:* the full runner test suite still passes — **778 passed**; the only
+  2 failures are pre-existing and unrelated (a missing optional `google-genai`
+  package), identical before and after my change.
+- *Direct proof:* calling the sampler with the **old buggy `[1, 1]` spec** now
+  yields **12/12 items with all 3 attributes, 0 missing the `label`, and 12/12
+  distinct combinations** — the bug can no longer occur, even from a config that
+  was previously broken.
+
+---
+
+## 7. Second finding — the generated content does not match its label
 
 Fixing the sampler fixed *coverage* (every label is now represented). But a blind
 read of the 12 generated emails from `EXP-guy-03` reveals a **second, deeper
@@ -195,25 +231,36 @@ model limitation on a now-correct benchmark.)
 
 ---
 
-## 7. Fix log (changelog of my changes)
+## 8. Fix log (changelog of my changes)
+
+Two kinds of change: **(A) genuine system-code bug fixes**, and **(B)** task
+config + infrastructure.
+
+**(A) System-code bug fixes**
 
 | # | File | Change | Why |
 |---|---|---|---|
-| 1 | `Runs/_guy_configs/02_fixed.yaml` | `sampling.target: [1,1]` → `all`, `total: 12` | **The core fix** — full Cartesian coverage of the attribute space |
-| 2 | `Code/runner/interfaces/openrouter_iface.py` | Recognise HTTP `429` / `rate-limited`; honour `retry_after`; raise retry attempts 3 → 6 with a ~20–30 s cooldown | Free-tier `:free` models share a pool that 429s with ~30 s cooldowns; the old 1–2 s backoff skipped most datapoints |
-| 3 | `Code/runner/phases/phase4.py`, `phase5.py` | `_MAX_WORKERS` now reads `COEVAL_MAX_WORKERS` env var (default 10) | Let me drop concurrency to 2 so parallel student calls don't instantly trip the free-tier rate limit |
-| 4 | `Code/runner/interfaces/probe.py` | Skip probing the virtual `metric` interface | The deterministic judge has no API to probe |
+| 1 | `Code/runner/phases/phase3.py` | **The diversity bug, fixed in code.** Target attributes now always go through full-coverage cycling (new `_build_target_sequence`); a numeric `sampling.target` no longer drops attributes. `_sample_attrs` is now nuanced-only. | The full-coverage path ran only for `target: all`; a numeric spec silently dropped the ground-truth `label` and killed diversity (§3, §6). Verified: 778 tests pass; `[1,1]` now gives 12/12 full, labeled, distinct items |
+| 2 | `Code/runner/interfaces/probe.py` | Register the virtual `metric` interface (return early) | Without it a `metric` judge fell through to the HuggingFace probe and was wrongly loaded as a HF model → probe failure |
+
+**(B) Task config + infrastructure (to run on free models)**
+
+| # | File | Change | Why |
+|---|---|---|---|
+| 3 | `Runs/_guy_configs/*.yaml` | `sampling.target: all`; rewritten teacher prompt (per-class definitions + one example per class); neutral nuances | Config-level fixes for finding #1 (coverage) and finding #2 (content matches label) |
+| 4 | `Code/runner/interfaces/openrouter_iface.py` | Recognise HTTP `429` / `rate-limited`; honour `retry_after`; 6 patient retries; fail fast on the daily free-quota cap | Free `:free` models share a pool that 429s with ~30 s cooldowns; the old 1–2 s backoff skipped most datapoints |
+| 5 | `Code/runner/phases/phase4.py`, `phase5.py` | `_MAX_WORKERS` reads `COEVAL_MAX_WORKERS` env var (default 10) | Drop concurrency to 2 so parallel calls don't instantly trip the free-tier rate limit |
 
 ---
 
-## 8. Limitations and honest notes
+## 9. Limitations and honest notes
 
 - **Free-tier rate limits dominated the engineering effort.** OpenRouter `:free` endpoints share an upstream pool. The popular `meta-llama/llama-3.3-70b-instruct:free` was so saturated that a teacher run there failed 7/8 items; switching the teacher to the responsive `openai/gpt-oss-20b:free` fixed it. There is also a hard **50 free requests/day** account cap, which truncated the student phase of the fixed run. None of this affects the headline result, which lives entirely in Phase-3 generation.
 - **The student ranking is a confound, not a capability measure.** Two of the three students (`nemotron-9b`, `glm-4.5-air`) are *reasoning* models; at `max_tokens: 16` they emit chain-of-thought ("Hmm, the user has given me…") instead of a bare label, and `exact_match` (which requires full string equality, `metric_judge.py:136`) scores that 0. This is a student-side evaluation artifact, **not** the benchmark-generation bug, and per the assignment's framing the focus stayed on generation.
 
 ---
 
-## 9. How to reproduce
+## 10. How to reproduce
 
 ```bash
 # 1. Put an OpenRouter key in keys.yaml (git-ignored):
