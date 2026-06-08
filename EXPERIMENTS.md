@@ -22,6 +22,7 @@ The narrative analysis (root cause, fix, before/after) is in
 | `EXP-guy-02-phishing-fixed`  | `target: all`, total 12 | **AFTER** — the fix | failed³ | 12 | **12** | **12** |
 | `EXP-guy-03-ranking`         | `target: all`, total 12 | Model ranking (clean students) | completed | 12 | **12** | **12** |
 | `EXP-guy-04-improved-prompt` | `target: all`, total 12 | **Improved teacher prompt** (finding #2 fix) | completed | 12 | **12** | **12** |
+| `EXP-guy-07-proper-free`     | `target: all`, total 12 | Broader 4-model free ranking | completed | 12 | **12** | **12** |
 
 ¹ Free-tier 429 storm on `llama-3.3-70b:free` teacher — 7/8 datapoints skipped.
 ² `llama-3.3-70b:free` persistently rate-limited upstream; killed and switched teacher to `gpt-oss-20b:free`.
@@ -123,6 +124,31 @@ broken. Fixing benchmark generation roughly doubled accuracy. The only class sti
 missed is "Suspicious" (the two larger models never predict it), which is now a
 **genuine model limitation** on a correct benchmark — exactly the failure type the
 assignment treats as acceptable.
+
+### Broader free ranking + a note on variance (`EXP-guy-07`)
+
+Four reliable free students (1.2B → 31B) on a fresh balanced benchmark:
+
+| Rank | Student | Accuracy | Phishing | Suspicious | Legitimate |
+|-----:|---------|---------:|---------:|-----------:|-----------:|
+| 1 | `lfm-1.2b`    | 0.67 (8/12) | 4/4 | 0/4 | 4/4 |
+| 2 | `gpt-oss-20b` | 0.58 (7/12) | 4/4 | 0/4 | 3/4 |
+| 2 | `gemma-4-31b` | 0.58 (7/12) | 4/4 | 1/4 | 2/4 |
+| 2 | `gemma-4-26b` | 0.58 (7/12) | 4/4 | 0/4 | 3/4 |
+
+**Two honest conclusions:**
+
+1. **The robust signal is per-class, not the fine ranking.** Every model solves
+   Phishing (4/4) and essentially none solves Suspicious (~0/4); the scores cluster
+   at 0.58–0.67. Model size does not predict accuracy here (the 1.2B model "wins"
+   only because it never guesses Suspicious and happens to split Phishing/Legitimate
+   well — luck, not skill).
+2. **Small benchmarks are noisy.** `gemma-4-26b` scored 0.83 in Run 04 but 0.58
+   here — each run regenerates a different 12-item set, so 12 items give high
+   variance. A stable fine-grained ranking needs many more items (now feasible:
+   the daily free cap rose to 1000/day after the account added credit). The
+   trustworthy takeaway from these runs is the **per-class pattern**, not the exact
+   order within the 0.58–0.67 cluster.
 
 ---
 
