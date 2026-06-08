@@ -1,7 +1,6 @@
 # Course Project Report — Diagnosing and Fixing a Benchmark-Generation Diversity Bug
 
 **Domain:** Cybersecurity · **Task:** Phishing-email classification (Phishing / Suspicious / Legitimate)
-**Author:** Guy ([@guy-yo](https://github.com/guy-yo)) <!-- TODO: add your full name + student ID -->
 **Base system:** [CoEval](https://github.com/ApartsinProjects/CoEval) by Alexander Apartsin & Yehudit Aperstein. This report covers **only my own contributions** (experiments, debugging, and fixes) on top of that system.
 
 ---
