@@ -1,8 +1,8 @@
 # 🎓 Course Project — Phishing-Detection Benchmark (fork)
 
-> This is my course-project fork of **CoEval**. My assignment was to use the system to
-> build a custom **phishing-detection** evaluation benchmark, rank several LLMs on it,
-> and **find and fix a benchmark-generation diversity bug**.
+> A course-project fork of **CoEval**. The goal: use the system to build a custom
+> **phishing-detection** evaluation benchmark, rank several LLMs on it, and
+> **find and fix a benchmark-generation diversity bug**.
 >
 > ### 👉 **[Full project report: REPORT.md](REPORT.md)** · **[Results of all runs: EXPERIMENTS.md](EXPERIMENTS.md)**
 >
@@ -15,7 +15,7 @@
 > All experiments ran on OpenRouter `:free` models at **USD 0**. See [REPORT.md](REPORT.md)
 > for the root-cause analysis, before/after data, and full fix log.
 >
-> *Built on CoEval by Alexander Apartsin & Yehudit Aperstein — original project README below.*
+> *Built on CoEval — original project README below.*
 
 ---
 
