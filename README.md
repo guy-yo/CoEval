@@ -12,8 +12,10 @@
 > fixed it, and demonstrated a clean before/after: emails went from **1 of 3 attributes
 > controlled (50% with no label)** to **all 12 attribute combinations covered, every email
 > fully labeled**. I also made the OpenRouter interface resilient to free-tier rate limits.
-> All experiments ran on OpenRouter `:free` models at **USD 0**. See [REPORT.md](REPORT.md)
-> for the root-cause analysis, before/after data, and full fix log.
+> The bug-fixing experiments ran on OpenRouter `:free` models at **USD 0**; the broader
+> model ranking added a few cheap paid frontier models for about **USD 0.006** total.
+> See [REPORT.md](REPORT.md) for the root-cause analysis, before/after data, model
+> ranking, and full fix log.
 >
 > *Built on CoEval — original project README below.*
 

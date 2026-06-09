@@ -230,7 +230,38 @@ model limitation on a now-correct benchmark.)
 
 ---
 
-## 8. Fix log (changelog of my changes)
+## 8. Model ranking on the fixed benchmark
+
+With the benchmark fixed (correct coverage + content that matches the labels),
+I ranked several LLMs on it (judge = `exact_match`). The clearest result is the
+largest run, `EXP-guy-08`: 24 balanced items (8 per class), six students -- three
+reliable free models plus three cheap paid frontier models. **Total cost: USD 0.0057.**
+
+| Rank | Student | Tier | Accuracy | Phishing | Suspicious | Legitimate |
+|-----:|---------|------|---------:|---------:|-----------:|-----------:|
+| 1 | `gemini-2.5-flash-lite` | paid | **0.88** | 8/8 | **5/8** | 8/8 |
+| 2 | `gpt-4o-mini`      | paid | 0.79 | 8/8 | 3/8 | 8/8 |
+| 2 | `gemma-4-26b`      | free | 0.79 | 8/8 | 3/8 | 8/8 |
+| 4 | `gpt-oss-20b`      | free | 0.71 | 8/8 | 1/8 | 8/8 |
+| 5 | `lfm-1.2b`         | free | 0.67 | 8/8 | 0/8 | 8/8 |
+| 5 | `claude-3.5-haiku` | paid | 0.67 | 8/8 | 0/8 | 8/8 |
+
+Three takeaways:
+
+- **Every model solves Phishing (8/8) and Legitimate (8/8)**, so the entire ranking
+  is decided by the hard, ambiguous **Suspicious** class. That clear classes are a
+  floor everyone passes is itself a sign the benchmark is well-formed.
+- **Bigger / more expensive is not better:** the paid `claude-3.5-haiku` tied last
+  with the tiny free `lfm-1.2b`, and the free `gemma-4-26b` matched paid `gpt-4o-mini`.
+  Capability on this task is not predicted by price or size.
+- This larger run used cheap paid frontier models for **USD 0.0057** once the account
+  added USD 10 of credit (which also raises the free daily cap from 50 to 1000
+  requests/day). The earlier, noisier 12-item rankings and all per-run detail are in
+  [EXPERIMENTS.md](EXPERIMENTS.md).
+
+---
+
+## 9. Fix log (changelog of my changes)
 
 Two kinds of change: **(A) genuine system-code bug fixes**, and **(B)** task
 config + infrastructure.
@@ -252,14 +283,14 @@ config + infrastructure.
 
 ---
 
-## 9. Limitations and honest notes
+## 10. Limitations and honest notes
 
-- **Free-tier rate limits dominated the engineering effort.** OpenRouter `:free` endpoints share an upstream pool. The popular `meta-llama/llama-3.3-70b-instruct:free` was so saturated that a teacher run there failed 7/8 items; switching the teacher to the responsive `openai/gpt-oss-20b:free` fixed it. There is also a hard **50 free requests/day** account cap, which truncated the student phase of the fixed run. None of this affects the headline result, which lives entirely in Phase-3 generation.
+- **Free-tier rate limits dominated the early engineering effort.** OpenRouter `:free` endpoints share an upstream pool. The popular `meta-llama/llama-3.3-70b-instruct:free` was so saturated that a teacher run there failed 7/8 items; switching the teacher to the responsive `openai/gpt-oss-20b:free` fixed it. Early runs also hit the hard **50 free requests/day** cap (it truncated the student phase of the first fixed run). Adding USD 10 of credit later raised that cap to 1000/day and unlocked cheap, reliable paid models, which made the larger ranking in §8 possible. None of this affects the headline generation result.
 - **The student ranking is a confound, not a capability measure.** Two of the three students (`nemotron-9b`, `glm-4.5-air`) are *reasoning* models; at `max_tokens: 16` they emit chain-of-thought ("Hmm, the user has given me…") instead of a bare label, and `exact_match` (which requires full string equality, `metric_judge.py:136`) scores that 0. This is a student-side evaluation artifact, **not** the benchmark-generation bug, and per the assignment's framing the focus stayed on generation.
 
 ---
 
-## 10. How to reproduce
+## 11. How to reproduce
 
 ```bash
 # 1. Put an OpenRouter key in keys.yaml (git-ignored):
@@ -272,9 +303,10 @@ COEVAL_MAX_WORKERS=2 python -m runner.cli run --config Runs/_guy_configs/01a_bug
 # 3. Fixed run (after):
 COEVAL_MAX_WORKERS=2 python -m runner.cli run --config Runs/_guy_configs/02_fixed.yaml
 
+# 4. The bigger model ranking (§8):
+COEVAL_MAX_WORKERS=2 python -m runner.cli run --config Runs/_guy_configs/08_big_mixed.yaml
+
 # Inspect the generated benchmark items:
 #   Runs/EXP-guy-01c-phishing-buggy/phase3_datapoints/*.jsonl   (buggy: 1 attr each)
 #   Runs/EXP-guy-02-phishing-fixed/phase3_datapoints/*.jsonl    (fixed: all 12 combos)
 ```
-
-> Note: with the 50-requests/day free cap, run one experiment at a time, or add credit to OpenRouter to raise the cap to 1000/day.

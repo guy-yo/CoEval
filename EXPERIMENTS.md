@@ -189,6 +189,3 @@ cheap paid frontier models. **Actual cost: USD 0.0057** (free daily cap is 1000/
    COEVAL_MAX_WORKERS=2 python -m runner.cli run --config Runs/_guy_configs/<your_config>.yaml
    ```
 3. Re-run `python scripts/summarize_runs.py` and paste the refreshed table above.
-
-> Budget reminder: OpenRouter free models are capped at **50 requests/day** unless
-> the account has purchased credit (then 1000/day). Plan run sizes accordingly.
