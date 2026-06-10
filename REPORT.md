@@ -1,7 +1,10 @@
-# Course Project Report — Diagnosing and Fixing a Benchmark-Generation Diversity Bug
+# MailRank — Project Report
 
+*Ranking LLMs on email-classification tasks, and diagnosing & fixing a benchmark-generation bug.*
+
+**Author:** Guy Yogev ([@guy-yo](https://github.com/guy-yo))
 **Domain:** Cybersecurity · **Task:** Phishing-email classification (Phishing / Suspicious / Legitimate)
-**Base system:** [CoEval](https://github.com/ApartsinProjects/CoEval). This report covers **only my own contributions** (experiments, debugging, and fixes) on top of that system.
+**Built on:** [CoEval](https://github.com/ApartsinProjects/CoEval) (third-party teacher/student/judge framework). This report covers **only my own contributions** (task design, experiments, debugging, and fixes).
 
 ---
 
