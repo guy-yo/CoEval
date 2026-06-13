@@ -1,0 +1,1 @@
+{"experiment_id": "EXP-guy-10-roundrobin", "status": "failed", "created_at": "2026-06-13T19:50:05Z", "updated_at": "2026-06-13T20:21:09Z", "phases_completed": ["attribute_mapping", "rubric_mapping", "data_generation", "response_collection", "evaluation"], "phases_in_progress": [], "resume_from": null}

@@ -1,0 +1,1 @@
+{"correctness": "The student's one-word label (Phishing, Suspicious, or Legitimate) is the correct classification of the email, judged against the email's actual content (links, urgency, requests for credentials, or their absence) and the reference label.\n"}

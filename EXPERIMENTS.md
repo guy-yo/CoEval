@@ -25,6 +25,7 @@ The narrative analysis (root cause, fix, before/after) is in
 | `EXP-guy-07-proper-free`     | `target: all`, total 12 | Broader 4-model free ranking | completed | 12 | **12** | **12** |
 | `EXP-guy-08-big-mixed`       | `target: all`, total 24 | **Stable ranking, free + paid frontier** | completed | 24 | **24** | **24** |
 | `EXP-guy-09-full-ensemble`   | `target: all`, 4×3 | **Full pipeline: multi-teacher + LLM-judge ensemble** | completed | 12 | **12** | up to 12 |
+| `EXP-guy-10-roundrobin`      | `target: all`, 5×4 | **Round-robin: who writes / detects / judges best** | partial | 20 | **20** | up to 20 |
 
 ¹ Free-tier 429 storm on `llama-3.3-70b:free` teacher — 7/8 datapoints skipped.
 ² `llama-3.3-70b:free` persistently rate-limited upstream; killed and switched teacher to `gpt-oss-20b:free`.
@@ -212,6 +213,46 @@ the true ranking?* Here it does.
 > qualitative factor (LLM judges) from a metric factor (the `exact_match` judge). The
 > manual analysis above handles that split correctly; absolute scores are lower than
 > `EXP-guy-08` because this run has only 12 unbalanced items.
+
+### Round-robin: who writes / detects / judges best (`EXP-guy-10`)
+
+Five models, each a **teacher + student** (three also **judge**), 20 emails, a purely
+qualitative `correctness` rubric so CoEval's `analyze` reports come out valid
+(*Valid: 283/288*). Cost USD 0.012. This run profiles every model in all three roles.
+
+From CoEval's `analyze` (`reports/complete_report.xlsx`, Model Summary) plus an offline
+`exact_match` ground-truth pass:
+
+| Model | 🕵️ Detector (student, exact_match) | ✍️ Writer faithfulness¹ | ✍️ Writer discrimination² (R3) | ⚖️ Judge reliability³ (SPA) |
+|-------|-----------------------------------:|------------------------:|-------------------------------:|----------------------------:|
+| `gpt-4o-mini`      | **0.85** | 0.88 | 0.50 | — |
+| `gemini-2.5-flash-lite` | 0.75 | 0.88 | **0.75** | 0.967 |
+| `gpt-oss-20b`      | 0.70 | **0.50** (worst) | 0.25 | **0.973** |
+| `gemma-4-26b`      | 0.62 | **1.00** | 0.25 | 0.951 |
+| `claude-3.5-haiku` | 0.60 | 0.75 | 0.25 | — |
+
+¹ fraction of a teacher's emails where the strong students (gpt-4o-mini, gemini) agree
+with the teacher's gold label — i.e. content actually matches the label.
+² CoEval V1/R3: how well a teacher's emails *separate* strong from weak students.
+³ CoEval SPA: agreement of the judge with the rest of the panel.
+
+**Findings:**
+
+- **Best detector: `gpt-4o-mini` (0.85).** Best at the classification task itself.
+- **Best benchmark writer: `gemini-2.5-flash-lite`.** Its emails are both faithful
+  (0.88) and the most *discriminating* (R3 0.75) — they separate strong from weak models.
+- **Worst writer: `gpt-oss-20b`** — strong models agree with its gold labels only **50%**
+  of the time, i.e. its email content often does not match the label it assigned (the
+  same content↔label failure mode as the original bug, now measured per model).
+- **No model is best at everything.** `gpt-oss-20b` is the *worst* writer but the *best*
+  judge; `gemma-4-26b` writes the most faithful emails yet is the least reliable (lenient)
+  judge; `gpt-4o-mini` detects best but writes less discriminating emails;
+  `gemini-2.5-flash-lite` is the most well-rounded. **Writing, detecting, and judging are
+  distinct skills.**
+
+> CoEval's `analyze` produced 9 reports here (`reports/`): coverage, score distribution,
+> teacher / student / judge reports, the teacher×student interaction matrix, judge
+> consistency, and a consolidated Excel workbook — all consistent with the table above.
 
 ---
 

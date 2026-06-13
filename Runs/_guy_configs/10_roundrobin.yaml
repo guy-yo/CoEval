@@ -1,0 +1,131 @@
+# =============================================================================
+# MailRank -- RUN 10: round-robin (who writes good emails / who detects well)
+# =============================================================================
+# Five models each act as TEACHER + STUDENT; three of them also JUDGE. Every
+# teacher writes a set of emails, every student classifies every email, and a
+# 3-judge LLM ensemble scores correctness.
+#
+# Rubric is PURELY qualitative (one `correctness` factor) so CoEval's analyze
+# reports come out valid (no metric factor mixed in -> no INCOMPLETE_SCORES).
+# Ground-truth exact_match is computed offline from the gold labels.
+#
+# Analysis goals:
+#   - best DETECTOR  = student classification accuracy (overall + per class)
+#   - best WRITER    = teacher whose emails' gold labels agree with the strong
+#                      models' consensus (faithful, well-written emails)
+#   - teacher x student matrix, per-class difficulty, judge reliability
+#
+# Scale: 5 teachers x 4 = 20 emails; 5 students x 20 = 100 responses;
+# 3 judges x 100 = 300 judge calls. Est. cost ~USD 0.027.
+# =============================================================================
+
+models:
+  - name: gpt-oss-20b
+    interface: openrouter
+    parameters: {model: openai/gpt-oss-20b:free, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student, judge]
+    role_parameters:
+      teacher: {temperature: 0.8, max_tokens: 512}
+      student: {temperature: 0.3, max_tokens: 16}
+      judge:   {temperature: 0.0, max_tokens: 256}
+
+  - name: gemma-4-26b
+    interface: openrouter
+    parameters: {model: google/gemma-4-26b-a4b-it:free, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student, judge]
+    role_parameters:
+      teacher: {temperature: 0.8, max_tokens: 512}
+      student: {temperature: 0.3, max_tokens: 16}
+      judge:   {temperature: 0.0, max_tokens: 256}
+
+  - name: gemini-flash-lite
+    interface: openrouter
+    parameters: {model: google/gemini-2.5-flash-lite, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student, judge]
+    role_parameters:
+      teacher: {temperature: 0.8, max_tokens: 512}
+      student: {temperature: 0.3, max_tokens: 16}
+      judge:   {temperature: 0.0, max_tokens: 256}
+
+  - name: gpt-4o-mini
+    interface: openrouter
+    parameters: {model: openai/gpt-4o-mini, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student]
+    role_parameters:
+      teacher: {temperature: 0.8, max_tokens: 512}
+      student: {temperature: 0.3, max_tokens: 16}
+
+  - name: claude-haiku-3.5
+    interface: openrouter
+    parameters: {model: anthropic/claude-3.5-haiku, temperature: 0.7, max_tokens: 512}
+    roles: [teacher, student]
+    role_parameters:
+      teacher: {temperature: 0.8, max_tokens: 512}
+      student: {temperature: 0.3, max_tokens: 16}
+
+
+tasks:
+  - name: phishing_detection
+    description: >
+      Classify an email as Phishing, Suspicious, or Legitimate
+      based on its content and characteristics.
+    output_description: >
+      A single word -- one of: Phishing, Suspicious, or Legitimate. No other text.
+
+    target_attributes:
+      label:        [Phishing, Suspicious, Legitimate]
+      sender_type:  [bank, unknown]
+      quality:      [professional, typos]
+
+    nuanced_attributes:
+      tone:    [formal, friendly]
+      context: [order_confirmation, account_update]
+
+    sampling:
+      target: all
+      nuance: [1, 1]
+      total: 4            # per teacher -> 5 teachers x 4 = 20 emails
+
+    rubric:
+      correctness: >
+        The student's one-word label (Phishing, Suspicious, or Legitimate) is the
+        correct classification of the email, judged against the email's actual
+        content (links, urgency, requests for credentials, or their absence) and
+        the reference label.
+
+    evaluation_mode: single
+
+    prompt_library:
+      sample: |
+        You are generating ONE labeled email for a phishing-detection benchmark.
+        The email's CONTENT must genuinely match the target class given below.
+
+        Required attributes (write an email of the `label` class): {target_attributes}
+
+        Class definitions -- make the content unmistakably fit the assigned class:
+          - "Phishing": a clearly malicious email. Fake or look-alike links, requests
+            for passwords or bank details, threats or false urgency, spoofed sender.
+          - "Suspicious": ambiguous. A few mild red flags (generic greeting, a vague
+            unexpected request, an odd attachment) but nothing clearly malicious.
+          - "Legitimate": a genuine, harmless email a real company actually sends.
+            NO "verify your account" links, NO credential requests, NO threats.
+
+        One example per class (write something NEW, do not copy these):
+          - Phishing: {{"prompt": "URGENT: your account is locked. Verify within 24h or it is deleted: http://secure-login-verify.xyz", "response": "Phishing"}}
+          - Suspicious: {{"prompt": "Hi, please review the attached invoice and confirm the payment details when you get a chance.", "response": "Suspicious"}}
+          - Legitimate: {{"prompt": "Hi Dana, thanks for your order #4821. Your receipt is attached, no action needed. - The Acme Team", "response": "Legitimate"}}
+
+        Task: {task_description}
+        Response format for the email's label: {output_description}
+        Apply these style hints lightly, they must NOT change the class: {nuanced_attributes}
+
+        Now write a NEW email whose content genuinely matches the `label` class above.
+        Return only a JSON object: {{"prompt": "<the email text>", "response": "<the class label>"}}.
+
+
+experiment:
+  id: "EXP-guy-10-roundrobin"
+  storage_folder: "./Runs"
+  log_level: INFO
+  probe_mode: disable
+  generation_retries: 1

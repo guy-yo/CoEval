@@ -262,6 +262,28 @@ Three takeaways:
   requests/day). The earlier, noisier 12-item rankings and all per-run detail are in
   [EXPERIMENTS.md](EXPERIMENTS.md).
 
+### Using the full pipeline: writer vs detector vs judge
+
+A final round-robin run (`EXP-guy-10`) exercised the whole framework: five models, each
+a **teacher + student**, three of them also **judge**, scored by a 3-judge LLM ensemble
+(and verified with offline `exact_match`). CoEval's own `analyze` reports came out valid
+here and gave per-model scores in every role. The headline:
+
+| Model | Detector (student) | Writer (discrimination) | Judge (reliability) |
+|-------|-------------------:|------------------------:|--------------------:|
+| `gpt-4o-mini` | **0.85** (best) | 0.50 | — |
+| `gemini-2.5-flash-lite` | 0.75 | **0.75** (best) | 0.97 |
+| `gpt-oss-20b` | 0.70 | 0.25 (worst) | **0.97** (best) |
+| `gemma-4-26b` | 0.62 | 0.25 | 0.95 (lenient) |
+| `claude-3.5-haiku` | 0.60 | 0.25 | — |
+
+**No model is best at everything.** `gpt-oss-20b` is the *worst* email writer (strong
+models agree with its labels only 50% of the time) but the *best* judge; `gpt-4o-mini`
+is the best detector but writes less discriminating emails; `gemini-2.5-flash-lite` is
+the most well-rounded. **Writing good benchmark items, detecting well, and judging
+reliably are three distinct skills.** Full numbers and the CoEval report summary are in
+[EXPERIMENTS.md](EXPERIMENTS.md).
+
 ---
 
 ## 9. Fix log (changelog of my changes)
