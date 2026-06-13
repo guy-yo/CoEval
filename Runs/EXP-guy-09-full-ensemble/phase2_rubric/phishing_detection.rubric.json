@@ -1,0 +1,1 @@
+{"correctness": "The student's label (Phishing, Suspicious, or Legitimate) is the correct classification given the email's actual content -- links, urgency, requests for credentials, or the absence of these. Judge against the reference label.\n", "exact_match": {"metric": "exact_match", "description": "Exact match of the student's label against the reference label."}}

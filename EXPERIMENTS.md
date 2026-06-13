@@ -24,6 +24,7 @@ The narrative analysis (root cause, fix, before/after) is in
 | `EXP-guy-04-improved-prompt` | `target: all`, total 12 | **Improved teacher prompt** (finding #2 fix) | completed | 12 | **12** | **12** |
 | `EXP-guy-07-proper-free`     | `target: all`, total 12 | Broader 4-model free ranking | completed | 12 | **12** | **12** |
 | `EXP-guy-08-big-mixed`       | `target: all`, total 24 | **Stable ranking, free + paid frontier** | completed | 24 | **24** | **24** |
+| `EXP-guy-09-full-ensemble`   | `target: all`, 4×3 | **Full pipeline: multi-teacher + LLM-judge ensemble** | completed | 12 | **12** | up to 12 |
 
 ¹ Free-tier 429 storm on `llama-3.3-70b:free` teacher — 7/8 datapoints skipped.
 ² `llama-3.3-70b:free` persistently rate-limited upstream; killed and switched teacher to `gpt-oss-20b:free`.
@@ -178,6 +179,39 @@ cheap paid frontier models. **Actual cost: USD 0.0057** (free daily cap is 1000/
    not predicted by price or size.
 4. Going from 12 → 24 items removed the earlier ranking noise: Legitimate is now a
    clean 8/8 for everyone, and the Suspicious gradient (5/3/3/1/0/0) is crisp.
+
+### Full pipeline: multi-teacher + LLM-judge ensemble (`EXP-guy-09`)
+
+This run uses the whole framework: four models each act as **teacher + student +
+judge**. Every model generates part of the benchmark (4 × 3 = 12 emails), every model
+classifies every email, and an **ensemble of 4 LLM judges** scores each answer on a
+qualitative `correctness` rubric (High/Medium/Low), alongside a deterministic
+`exact_match` judge as the ground-truth anchor. **Cost: USD 0.0054.**
+
+The research question is CoEval's core claim: *can a no-label LLM-judge ensemble recover
+the true ranking?* Here it does.
+
+| Student | Ground truth (`exact_match`) | LLM-judge **ensemble** |
+|---------|-----------------------------:|-----------------------:|
+| `gemini-2.5-flash-lite` | 0.58 | 0.61 |
+| `gpt-4o-mini`           | 0.58 | 0.61 |
+| `gemma-4-26b`           | 0.50 | 0.53 |
+| `gpt-oss-20b`           | 0.50 | 0.54 |
+
+- **The ensemble tracks the ground truth.** Ensemble scores almost equal the
+  `exact_match` scores, and the ensemble cleanly separates the top tier (~0.61) from
+  the bottom tier (~0.53). Spearman ρ between the two rankings is **+0.60** (understated:
+  the only swaps are *within* pairs that are exactly tied in the ground truth).
+- **Judge reliability is visible.** `gemini-2.5-flash-lite` and `gpt-oss-20b` as judges
+  produced `correctness` scores almost identical to `exact_match`; `gpt-4o-mini` was
+  close. `gemma-4-26b` was the **lenient outlier** (mean 0.65 vs ~0.55 for the others) —
+  exactly the kind of rogue judge CoEval's reliability weighting is designed to discount.
+
+> Note: CoEval's built-in `analyze` reports flag *Valid: 0* on this run because they
+> expect every judge to score every rubric factor, whereas this rubric splits a
+> qualitative factor (LLM judges) from a metric factor (the `exact_match` judge). The
+> manual analysis above handles that split correctly; absolute scores are lower than
+> `EXP-guy-08` because this run has only 12 unbalanced items.
 
 ---
 
